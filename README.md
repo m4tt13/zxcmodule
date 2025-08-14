@@ -1,5 +1,5 @@
 # About
-Cheat module for Garry's Mod (x64, Client-state)
+Cheat module for Garry's Mod (x64, Client-state)  
 Author: https://github.com/serejaga
 
 ## Code example
