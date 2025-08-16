@@ -51,7 +51,8 @@ LUA_FUNCTION(ClientCmd) {
 LUA_FUNCTION(SetViewAngles) {
 	LUA->CheckType(1, Type::Angle);
 
-	interfaces::engineClient->SetViewAngles(LUA->GetAngle(1));
+	Angle va = LUA->GetAngle(1);
+	interfaces::engineClient->SetViewAngles(va);
 
 	return 0;
 }
@@ -413,15 +414,6 @@ LUA_FUNCTION(PredictSpread) {
 }
 
 // Prediction 
-LUA_FUNCTION(GetServerTime) {
-	LUA->CheckType(1, Type::UserCmd);
-
-	CUserCmd* cmd = LUA->GetUserType<CUserCmd>(1, Type::UserCmd);
-	LUA->PushNumber(g_prediction.GetServerTime(cmd));
-
-	return 1;
-}
-
 LUA_FUNCTION(StartPrediction) {
 	LUA->CheckType(1, Type::UserCmd);
 
@@ -710,9 +702,9 @@ LUA_FUNCTION(RequestFile) {
 
 	INetChannel* netChan = interfaces::engineClient->GetNetChannel();
 
-	netChan->RequestFile(LUA->GetNumber(1), LUA->GetNumber(2));
+	LUA->PushNumber(netChan->RequestFile(LUA->GetNumber(1), LUA->GetNumber(2)));
 
-	return 0;
+	return 1;
 } 
 
 LUA_FUNCTION(SendFile) {
@@ -722,9 +714,9 @@ LUA_FUNCTION(SendFile) {
 	const char* str = LUA->GetString(1);
 	INetChannel* netChan = interfaces::engineClient->GetNetChannel();
 
-	netChan->SendFile(str, LUA->GetNumber(2));
+	LUA->PushBool(netChan->SendFile(str, LUA->GetNumber(2)));
 
-	return 0;
+	return 1;
 }
 
 LUA_FUNCTION(GetLatency) {
@@ -937,9 +929,6 @@ LUA_FUNCTION(GetNetworkedVar) {
 	case SendPropType::DPT_Vector:
 		LUA->PushVector(*reinterpret_cast<Vector*>(reinterpret_cast<std::uintptr_t>(Ply) + netvar.offset));
 		break;
-	case SendPropType::DPT_VectorXY:
-		LUA->PushVector(Vector(*reinterpret_cast<float*>(reinterpret_cast<std::uintptr_t>(Ply) + netvar.offset), *reinterpret_cast<float*>(reinterpret_cast<std::uintptr_t>(Ply) + netvar.offset + sizeof(float)), 0.0f));
-		break;
 	case SendPropType::DPT_String:
 		LUA->PushString(*reinterpret_cast<const char**>(reinterpret_cast<std::uintptr_t>(Ply) + netvar.offset));
 		break;
@@ -1025,16 +1014,6 @@ LUA_FUNCTION(UpdateAnimations) {
 	CBasePlayerAnimState* animState = Ply->GetAnimState();
 
 	animState->Update( LUA->GetNumber(2), LUA->GetNumber(3) );
-
-	return 0;
-}
-
-LUA_FUNCTION(SetEntityFlags) {
-	LUA->CheckNumber(1);
-	LUA->CheckNumber(2);
-
-	CBasePlayer* Ply = reinterpret_cast<CBasePlayer*>( interfaces::entityList->GetClientEntity( LUA->GetNumber(1) ) );
-	Ply->m_fFlags() = static_cast<int>( LUA->GetNumber(2) );
 
 	return 0;
 }
@@ -1155,7 +1134,6 @@ GMOD_MODULE_OPEN() {
 		PushApiFunction("SetRandomSeed", SetRandomSeed);
 		PushApiFunction("PredictSpread", PredictSpread);
 
-		PushApiFunction("GetServerTime", GetServerTime);
 		PushApiFunction("StartPrediction", StartPrediction);
 		PushApiFunction("FinishPrediction", FinishPrediction);
 		PushApiFunction("RunPrediction", RunPrediction);
@@ -1180,7 +1158,6 @@ GMOD_MODULE_OPEN() {
 		PushApiFunction("Write", Write);
 
 		PushApiFunction("GetNetworkedVar", GetNetworkedVar);
-		PushApiFunction("SetEntityFlags", SetEntityFlags);
 		PushApiFunction("GetTickBase", GetTickBase);
 		PushApiFunction("SetTickBase", SetTickBase);
 		PushApiFunction("UpdateAnimations", UpdateAnimations);

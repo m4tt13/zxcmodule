@@ -21,7 +21,7 @@ class DVariant {
 public:
 	union {
 		float	m_Float;
-		long	m_Int;
+		int		m_Int;
 		char* m_pString;
 		void* m_pData;
 		float	m_Vector[3];
@@ -56,7 +56,7 @@ struct RecvProp {
 	const void* m_pExtraData;
 	RecvProp* m_pArrayProp;
 	void* m_ArrayLengthProxy;
-	void* m_ProxyFn;
+	RecvVarProxyFn m_ProxyFn;
 	void* m_DataTableProxyFn;
 	RecvTable* m_pDataTable;
 	int			m_Offset;

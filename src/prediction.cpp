@@ -11,28 +11,9 @@
 #include "patternscan.h"
 #include "util.h"
 
-Prediction::Prediction() : _moveData {0}, _oldCurTime(0.f), _oldFrameTime(0.f), _predictionRandomSeed(nullptr) {
+Prediction::Prediction() : _moveData {0}, _oldCurTime(0.f), _oldFrameTime(0.f), _predictionRandomSeed(nullptr), _predictionPlayer(nullptr) {
 	_predictionRandomSeed = reinterpret_cast<int*>(getAbsAddr(findPattern("client.dll", "0F B6 1D ?? ?? ?? ?? 0F 29 74 24")));
-}
-
-float Prediction::GetServerTime(CUserCmd* cmd) const {
-	CBasePlayer* localPlayer = reinterpret_cast<CBasePlayer*>(interfaces::entityList->GetClientEntity(interfaces::engineClient->GetLocalPlayer()));
-
-	static CUserCmd* lastCmd = nullptr;
-
-	if (cmd)
-		lastCmd = cmd;
-
-	if (!localPlayer) {
-		return interfaces::globalVars->curtime;
-	}
-
-	int tickBase = localPlayer->m_nTickBase();
-
-	if (lastCmd && !lastCmd->hasbeenpredicted)
-		tickBase++;
-
-	return tickBase * interfaces::globalVars->interval_per_tick;
+	_predictionPlayer = reinterpret_cast<CBasePlayer**>(getAbsAddr(findPattern("client.dll", "48 89 3D ?? ?? ?? ?? 66 0F 6E 87")));
 }
 
 void Prediction::Start(CUserCmd* cmd) {
@@ -40,13 +21,19 @@ void Prediction::Start(CUserCmd* cmd) {
 
 	localPlayer->GetCurrentCommand() = cmd;
 	*_predictionRandomSeed = cmd->random_seed;
+	*_predictionPlayer = localPlayer;
 
 	_oldCurTime = interfaces::globalVars->curtime;
 	_oldFrameTime = interfaces::globalVars->frametime;
-	// _oldVelocity = localPlayer->GetVelocity();
 
 	interfaces::globalVars->curtime = localPlayer->m_nTickBase() * interfaces::globalVars->interval_per_tick;
 	interfaces::globalVars->frametime = interfaces::globalVars->interval_per_tick;
+
+	bool OldIsFirstTimePredicted = interfaces::prediction->GetIsFirstTimePredicted();
+	bool OldInPrediction = interfaces::prediction->GetInPrediction();
+
+	interfaces::prediction->GetIsFirstTimePredicted() = false;
+	interfaces::prediction->GetInPrediction() = true;
 
 	interfaces::prediction->SetLocalViewAngles(cmd->viewangles);
 	interfaces::gameMovement->StartTrackPredictionErrors(localPlayer);
@@ -57,10 +44,8 @@ void Prediction::Start(CUserCmd* cmd) {
 	interfaces::gameMovement->ProcessMovement(localPlayer, &_moveData);
 	interfaces::prediction->FinishMove(localPlayer, cmd, &_moveData);
 
-
-
-	if (interfaces::globalVars->frametime > 0.f)
-		localPlayer->m_nTickBase()++;
+	interfaces::prediction->GetIsFirstTimePredicted() = OldIsFirstTimePredicted;
+	interfaces::prediction->GetInPrediction() = OldInPrediction;
 }
 
 void Prediction::Finish() {
@@ -70,10 +55,10 @@ void Prediction::Finish() {
 
 	interfaces::globalVars->curtime = _oldCurTime;
 	interfaces::globalVars->frametime = _oldFrameTime;
-	// localPlayer->GetVelocity() = _oldVelocity;
 
-	*_predictionRandomSeed = -1;
 	localPlayer->GetCurrentCommand() = nullptr;
+	*_predictionRandomSeed = -1;
+	*_predictionPlayer = nullptr;
 }
 
 Prediction g_prediction;

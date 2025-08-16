@@ -12,8 +12,6 @@ public:
 	Prediction();
 	~Prediction() = default;
 
-	float GetServerTime(CUserCmd* cmd = nullptr) const;
-	
 	void Start(CUserCmd* cmd);
 	void Finish();
 
@@ -24,6 +22,7 @@ private:
 	float _oldFrameTime;
 
 	int* _predictionRandomSeed;
+	CBasePlayer** _predictionPlayer;
 };
 
 extern Prediction g_prediction;

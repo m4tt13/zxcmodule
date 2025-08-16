@@ -28,7 +28,7 @@ public:
 	VPROXY(GetLocalPlayer, 12, int, (void));
 	VPROXY(Time, 14, double, (void));
 	VPROXY(GetLastTimeStamp, 15, float, (void));
-	VPROXY(SetViewAngles, 20, void, (Angle viewAngles), viewAngles);
+	VPROXY(SetViewAngles, 20, void, (Angle&));
 	VPROXY(IsBoxVisible, 31, bool, (Vector const&, Vector const&));
 	VPROXY(IsBoxInViewCluster, 32, bool, (Vector const&, Vector const&));
 	VPROXY(GetGameDirectory, 35, char const*, (void));

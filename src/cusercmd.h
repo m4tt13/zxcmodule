@@ -50,6 +50,15 @@ public:
 		memset(this, 0, sizeof(CUserCmd));
 	}
 
+	CUserCmd& operator=(const CUserCmd& src)
+	{
+		if (this == &src)
+			return *this;
+
+		memcpy(this, &src, sizeof(*this));
+		return *this;
+	}
+
 	std::uint32_t GetChecksum() {
 		CRC32_t crc;
 

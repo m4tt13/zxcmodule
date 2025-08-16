@@ -36,7 +36,9 @@ namespace detours {
 	auto CL_MovePattern = findPattern("engine.dll", "40 55 53 48 8D AC 24 ?? ?? ?? ?? B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 2B E0 0F 29 B4 24");
 
 	ClientEffectCallback impactFunctionOriginal = nullptr;
-	CBaseEntity* localPlayer;
+	RecvVarProxyFn simTimeProxyFuncOriginal = nullptr;
+	RecvProp* simTimeRecvProp = nullptr;
+	CBasePlayer* localPlayer = nullptr;
 
 	// Pre CreateMove
 	using PreCreateMoveFn = bool(__fastcall*)(ClientModeShared* self, float flInputSampleTime, CUserCmd* cmd);
@@ -67,7 +69,7 @@ namespace detours {
 
 	void __fastcall CreateMoveHookFunc(CHLClient* self, int sequence_number, float input_sample_frametime, bool active) {
 		CVerifiedUserCmd* vcmd = interfaces::input->GetVerifiedCommand(sequence_number);
-		CUserCmd* cmd = &vcmd->cmd;
+		CUserCmd* cmd = interfaces::input->GetCommand(sequence_number);
 
 		postCreateMoveOriginal(self, sequence_number, input_sample_frametime, active);
 
@@ -81,12 +83,7 @@ namespace detours {
 			}
 		}
 
-		interfaces::engineClient->SetViewAngles(cmd->viewangles);
-
-		cmd->forwardmove = std::clamp(cmd->forwardmove, -10000.f, 10000.f);
-		cmd->sidemove = std::clamp(cmd->sidemove, -10000.f, 10000.f);
-		cmd->upmove = std::clamp(cmd->upmove, -10000.f, 10000.f);
-
+		vcmd->cmd = *cmd;
 		vcmd->crc = cmd->GetChecksum();
 	}
 
@@ -344,42 +341,21 @@ namespace detours {
 		if (!updateAllowed)
 			return;
 
-		VarMapping_t& map = self->GetVarMapping();
-		for (int i = 0; i < map.m_nInterpolatedEntries; i++) {
-			VarMapEntry_t& entry = map.m_Entries[i];
-			entry.m_bNeedsToInterpolate = false;
-		}
-
 		float OldCurtime = interfaces::globalVars->curtime;
 		float OldFrameTime = interfaces::globalVars->frametime;
-		int OldFlags = self->m_iEFlags();
-		int OldEffects = self->m_fEffects();
 
-		float simulationTime = self == localPlayer ? g_prediction.GetServerTime() : self->m_flSimulationTime();
-
-		interfaces::globalVars->curtime = simulationTime;
+		interfaces::globalVars->curtime = self->m_flSimulationTime();
 		interfaces::globalVars->frametime = interfaces::globalVars->interval_per_tick * updateTicks;
-
-		self->m_iEFlags() |= static_cast<int>(EFlags::DIRTY_ABSVELOCITY);
-		self->m_fEffects() |= static_cast<int>(EEffects::NOINTERP);
 
 		UpdateClientsideAnimationOriginal(self);
 
 		interfaces::globalVars->curtime = OldCurtime;
 		interfaces::globalVars->frametime = OldFrameTime;
-
-		self->m_iEFlags() = OldFlags;
-		self->m_fEffects() = OldEffects;
 	}
 
 	// Dispatch effect 
 	void hookEffect(ClientEffectCallback hookFunc, const char* effectName) {
-		static CClientEffectRegistration* s_pHead = nullptr;
-		if (!s_pHead) {
-			auto dispatchEffectToCallbackInst = findPattern("client.dll", "48 8B 1D ?? ?? ?? ?? 48 85 DB 74 ?? 0F 1F 40 ?? 48 8B 0B");
-			s_pHead = *reinterpret_cast<CClientEffectRegistration**>(getAbsAddr(dispatchEffectToCallbackInst));
-		}
-
+		static CClientEffectRegistration* s_pHead = *reinterpret_cast<CClientEffectRegistration**>(getAbsAddr(findPattern("client.dll", "48 8B 1D ?? ?? ?? ?? 48 85 DB 74 ?? 0F 1F 40 ?? 48 8B 0B")));
 		for (CClientEffectRegistration* pReg = s_pHead; pReg; pReg = pReg->m_pNext) {
 			if (pReg->m_pEffectName && strcmp(pReg->m_pEffectName, effectName) == 0) {
 				impactFunctionOriginal = pReg->m_pFunction;
@@ -424,6 +400,33 @@ namespace detours {
 		impactFunctionOriginal(data);
 	}
 
+	void SimTimeProxyFunc(const CRecvProxyData* pData, void* pStruct, void* pOut)
+	{
+		if (!pData->m_Value.m_Int)
+			return;
+
+		simTimeProxyFuncOriginal(pData, pStruct, pOut);
+	}
+
+	void hookSimTime() {
+		ClientClass* clientClass = interfaces::client->GetAllClasses();
+		while (clientClass) {
+			RecvTable* tbl = clientClass->m_pRecvTable;
+			if (strcmp(tbl->m_pNetTableName, "DT_BaseEntity") == 0) {
+				for (int i = 0; i < tbl->m_nProps; i++) {
+					RecvProp* prop = &tbl->m_pProps[i];
+					if (strcmp(prop->m_pVarName, "m_flSimulationTime") == 0) {
+						simTimeProxyFuncOriginal = prop->m_ProxyFn;
+						prop->m_ProxyFn = SimTimeProxyFunc;
+						simTimeRecvProp = prop;
+						return;
+					}
+				}
+			}
+			clientClass = clientClass->m_pNext;
+		}
+	}
+
 	void hook() {
 		void* SendNetMsgT = vmt::get<void*>(interfaces::engineClient->GetNetChannel(), 40);
 
@@ -435,6 +438,7 @@ namespace detours {
 		vmt::hook(interfaces::modelRender, &DrawModelExecuteOriginal, (const void*)DrawModelExecuteHookFunc, 20);
 
 		hookEffect(ImpactFunctionHookFunc, "Impact");
+		hookSimTime();
 
 		if (MH_Initialize() == MH_OK)
 		{
@@ -448,7 +452,7 @@ namespace detours {
 	}
 
 	void postInit() {
-		localPlayer = reinterpret_cast<CBaseEntity*>(interfaces::entityList->GetClientEntity(interfaces::engineClient->GetLocalPlayer()));
+		localPlayer = reinterpret_cast<CBasePlayer*>(interfaces::entityList->GetClientEntity(interfaces::engineClient->GetLocalPlayer()));
 
 		void* InterpolateT = vmt::get<void*>(localPlayer, 99);
 		void* UpdateClientAnimsT = vmt::get<void*>(localPlayer, 236);
@@ -476,6 +480,7 @@ namespace detours {
 		vmt::hook(interfaces::modelRender, &DrawModelDummy, DrawModelExecuteOriginal, 20);
 
 		hookEffect(impactFunctionOriginal, "Impact");
+		simTimeRecvProp->m_ProxyFn = simTimeProxyFuncOriginal;
 
 		MH_DisableHook(MH_ALL_HOOKS);
 		MH_Uninitialize();
