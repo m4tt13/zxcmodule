@@ -63,7 +63,6 @@ SetContextVector
 GetRandomSeed  
 SetRandomSeed  
 PredictSpread  
-GetServerTime  
 StartPrediction  
 FinishPrediction  
 RunPrediction  
@@ -83,7 +82,6 @@ ExcludeFromCapture
 Read  
 Write  
 GetNetworkedVar  
-SetEntityFlags  
 GetTickBase  
 SetTickBase  
 UpdateAnimations  
