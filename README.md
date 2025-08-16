@@ -77,6 +77,7 @@ SetInterpolation
 SetSequenceInterpolation  
 EnableAnimFix  
 LoopMove  
+DrawModelExecute  
 GetClipboardText  
 ExcludeFromCapture  
 Read  
