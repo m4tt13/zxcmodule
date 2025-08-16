@@ -58,9 +58,7 @@ namespace detours {
 			}
 		}
 
-		preCreateMoveOriginal(self, flInputSampleTime, cmd);
-
-		return false;
+		return preCreateMoveOriginal(self, flInputSampleTime, cmd);
 	}
 
 	// Post CreateMove
@@ -160,15 +158,36 @@ namespace detours {
 	}
 
 	// DrawModelEx 
-	using DrawModelExecuteFn = void(__fastcall*)(CModelRender* self, const DrawModelState_t& state, ModelRenderInfo_t* pInfo, matrix3x4_t* pCustomBoneToWorld);
+	using DrawModelExecuteFn = void(__fastcall*)(CModelRender* self, const DrawModelState_t* state, ModelRenderInfo_t* pInfo, matrix3x4_t* pCustomBoneToWorld);
 	DrawModelExecuteFn DrawModelExecuteOriginal = nullptr;
 
-	void __fastcall DrawModelExecuteHookFunc(CModelRender* self, const DrawModelState_t& state, ModelRenderInfo_t* pInfo, matrix3x4_t* pCustomBoneToWorld) {
+	struct DMEContext {
+		bool in_hook = false;
+		CModelRender* self = nullptr;
+		const DrawModelState_t* state = nullptr;
+		ModelRenderInfo_t* pInfo = nullptr;
+		matrix3x4_t* pCustomBoneToWorld = nullptr;
+	} dmeContext;
+
+	void callDMEViaContext()
+	{
+		if (dmeContext.in_hook)
+			DrawModelExecuteOriginal(dmeContext.self, dmeContext.state, dmeContext.pInfo, dmeContext.pCustomBoneToWorld);
+	}
+
+	void __fastcall DrawModelExecuteHookFunc(CModelRender* self, const DrawModelState_t* state, ModelRenderInfo_t* pInfo, matrix3x4_t* pCustomBoneToWorld) {
+
+		dmeContext.in_hook = true;
+		dmeContext.self = self;
+		dmeContext.state = state;
+		dmeContext.pInfo = pInfo;
+		dmeContext.pCustomBoneToWorld = pCustomBoneToWorld;
+
 		if (pInfo->entity_index) {
 			if (luaInit) {
 				auto* lua = interfaces::clientLua;
 
-				if (LuaHelpers::PushHookRun(lua, "DrawModelExecute" ) != 0) {
+				if (LuaHelpers::PushHookRun(lua, "PreDrawModelExecute" ) != 0) {
 					lua->PushNumber(pInfo->entity_index);
 					lua->PushNumber(pInfo->flags);
 
@@ -177,7 +196,22 @@ namespace detours {
 			}
 		}
 
-		return DrawModelExecuteOriginal(self, state, pInfo, pCustomBoneToWorld);
+		DrawModelExecuteOriginal(self, state, pInfo, pCustomBoneToWorld);
+
+		if (pInfo->entity_index) {
+			if (luaInit) {
+				auto* lua = interfaces::clientLua;
+
+				if (LuaHelpers::PushHookRun(lua, "PostDrawModelExecute" ) != 0) {
+					lua->PushNumber(pInfo->entity_index);
+					lua->PushNumber(pInfo->flags);
+
+					LuaHelpers::CallHookRun(lua, 2, 0);
+				}
+			}
+		}
+
+		dmeContext.in_hook = false;
 	}
 
 	// SendNetMsg 

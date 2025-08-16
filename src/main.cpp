@@ -532,6 +532,12 @@ LUA_FUNCTION(LoopMove) {
 	return 0;
 }
 
+LUA_FUNCTION(DrawModelExecute) {
+	detours::callDMEViaContext();
+
+	return 0;
+}
+
 // Win API
 LUA_FUNCTION(GetClipboardText) {
 	if (!OpenClipboard(nullptr)) {
@@ -1150,6 +1156,7 @@ GMOD_MODULE_OPEN() {
 		PushApiFunction("SetSequenceInterpolation", SetSequenceInterpolation);
 		PushApiFunction("EnableAnimFix", EnableAnimFix);
 		PushApiFunction("LoopMove", LoopMove);
+		PushApiFunction("DrawModelExecute", DrawModelExecute);
 
 		PushApiFunction("GetClipboardText", GetClipboardText);
 		PushApiFunction("ExcludeFromCapture", ExcludeFromCapture);
