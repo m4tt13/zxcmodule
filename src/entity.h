@@ -88,7 +88,7 @@ public:
 	bool IsInWater() { return GetWaterLevel() != WaterLevel::NotInWater; }
 	bool IsInNoclip() { return GetMoveType() == MoveType::NOCLIP; }
 
-	VPROXY(UpdateClientsideAnimation, 236, void, (void)); // wrong index ( 297 )
+	VPROXY(UpdateClientsideAnimation, 237, void, (void)); // wrong index ( 297 )
 
 	// CPrediction__RunCommand 2 line
 	OFFSETVAR(CUserCmd*, GetCurrentCommand, 0x2CA0); 

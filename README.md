@@ -80,8 +80,6 @@ LoopMove
 DrawModelExecute  
 GetClipboardText  
 ExcludeFromCapture  
-Read  
-Write  
 GetNetworkedVar  
 GetTickBase  
 SetTickBase  

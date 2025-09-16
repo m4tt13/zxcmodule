@@ -328,7 +328,11 @@ namespace detours {
 			}
 		}
 
-		CLMoveOriginal(accumulated_extra_samples, bFinalTick);
+		do {
+			globals::bLoopMove = false;
+
+			CLMoveOriginal(accumulated_extra_samples, bFinalTick);
+		} while (globals::bLoopMove);
 	}
 
 	// Interpolate
@@ -488,8 +492,8 @@ namespace detours {
 	void postInit() {
 		localPlayer = reinterpret_cast<CBasePlayer*>(interfaces::entityList->GetClientEntity(interfaces::engineClient->GetLocalPlayer()));
 
-		void* InterpolateT = vmt::get<void*>(localPlayer, 99);
-		void* UpdateClientAnimsT = vmt::get<void*>(localPlayer, 236);
+		void* InterpolateT = vmt::get<void*>(localPlayer, 100);
+		void* UpdateClientAnimsT = vmt::get<void*>(localPlayer, 237);
 
 		MH_CreateHook(InterpolateT, (LPVOID)&InterpolateHookFunc, (LPVOID*)&InterpolateOriginal);
 		MH_CreateHook(UpdateClientAnimsT, (LPVOID)&UpdateClientsideAnimationHookFunc, (LPVOID*)&UpdateClientsideAnimationOriginal);

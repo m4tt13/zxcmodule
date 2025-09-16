@@ -8,5 +8,5 @@ namespace globals {
 	bool	shouldInterpolateSequences	= true;
 	bool	shouldFixAnimations			= false;
 
-	void*	CL_MoveRetAddr				= nullptr;
+	bool	bLoopMove					= false;
 }

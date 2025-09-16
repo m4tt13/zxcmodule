@@ -8,6 +8,5 @@ namespace globals {
 	extern bool		shouldInterpolateSequences;
 	extern bool		shouldFixAnimations;
 
-	extern void*	CL_MoveRetAddr;
+	extern bool		bLoopMove;
 }
- 

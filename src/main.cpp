@@ -527,7 +527,7 @@ LUA_FUNCTION_BSETTER(SetSequenceInterpolation, globals::shouldInterpolateSequenc
 LUA_FUNCTION_BSETTER(EnableAnimFix, globals::shouldFixAnimations);
 
 LUA_FUNCTION(LoopMove) {
-	globals::CL_MoveRetAddr = (void*)((uintptr_t)globals::CL_MoveRetAddr - 0x6);
+	globals::bLoopMove = true;
 
 	return 0;
 }
@@ -1161,8 +1161,8 @@ GMOD_MODULE_OPEN() {
 		PushApiFunction("GetClipboardText", GetClipboardText);
 		PushApiFunction("ExcludeFromCapture", ExcludeFromCapture);
 
-		PushApiFunction("Read", Read);
-		PushApiFunction("Write", Write);
+		//PushApiFunction("Read", Read);
+		//PushApiFunction("Write", Write);
 
 		PushApiFunction("GetNetworkedVar", GetNetworkedVar);
 		PushApiFunction("GetTickBase", GetTickBase);
