@@ -73,7 +73,7 @@ public:
 	VPROXY(SetupBones, 16, bool, (matrix3x4_t* pBoneToWorldOut, int nMaxBones, int boneMask), pBoneToWorldOut, nMaxBones, boneMask);
 
 	OFFSETVAR(void*, m_hitboxBoneCacheHandle, 0x1AA0);
-	OFFSETVAR(CBasePlayerAnimState*, GetAnimState, 0x3660);
+	OFFSETVAR(CBasePlayerAnimState*, GetAnimState, 0x3668);
 	NETVAR(bool, DT_BaseAnimating, m_bClientSideAnimation);
 	NETVAR(float, DT_BaseAnimating, m_flModelScale);
 };

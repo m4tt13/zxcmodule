@@ -126,15 +126,15 @@ public:
 		return vmt::call<unsigned int>((void*)this, 62, type, crc);
 	}
 
-	VPROXY(SetDataRate, 27, void, (float));
-	VPROXY(SetChallengeNr, 33, void, (unsigned int));
-	VPROXY(SetCompressionMode, 61, void, (bool));
-	VPROXY(SetInterpolationAmount, 66, void, (float));
-	VPROXY(SetRemoteFramerate, 67, void, (float, float));
-	VPROXY(SetMaxRoutablePayloadSize, 68, void, (int));
+	VPROXY(SetDataRate, 27, void, (float rate), rate);
+	VPROXY(SetChallengeNr, 33, void, (unsigned int chnr), chnr);
+	VPROXY(SetCompressionMode, 61, void, (bool bUseCompression), bUseCompression);
+	VPROXY(SetInterpolationAmount, 66, void, (float flInterpolationAmount), flInterpolationAmount);
+	VPROXY(SetRemoteFramerate, 67, void, (float flFrameTime, float flFrameTimeStdDeviation), flFrameTime, flFrameTimeStdDeviation);
+	VPROXY(SetMaxRoutablePayloadSize, 68, void, (int nSplitSize), nSplitSize);
 	VPROXY(SetChoked, 45, void, (void));
-	VPROXY(Shutdown, 36, void, (char const*));
-	VPROXY(SetTimeout, 31, void, (float));
+	VPROXY(Shutdown, 36, void, (char const* reason), reason);
+	VPROXY(SetTimeout, 31, void, (float seconds), seconds);
 	VPROXY(SendDatagram, 46, int, (bf_write* data), data);
 	  
 public:

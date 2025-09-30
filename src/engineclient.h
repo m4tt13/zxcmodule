@@ -23,23 +23,24 @@ enum ClientFrameStage_t
 
 class IEngineClient {
 public:
-	VPROXY(ServerCmd, 6, void, (char const*, bool));
-	VPROXY(ClientCmd, 7, void, (char const*));
+	VPROXY(ServerCmd, 6, void, (char const* szCmdString, bool bReliable), szCmdString, bReliable);
+	VPROXY(ClientCmd, 7, void, (char const* szCmdString), szCmdString);
 	VPROXY(GetLocalPlayer, 12, int, (void));
 	VPROXY(Time, 14, double, (void));
 	VPROXY(GetLastTimeStamp, 15, float, (void));
-	VPROXY(SetViewAngles, 20, void, (Angle&));
-	VPROXY(IsBoxVisible, 31, bool, (Vector const&, Vector const&));
-	VPROXY(IsBoxInViewCluster, 32, bool, (Vector const&, Vector const&));
+	VPROXY(GetViewAngles, 19, void, (Angle* va), va);
+	VPROXY(SetViewAngles, 20, void, (Angle* va), va);
+	VPROXY(IsBoxVisible, 31, bool, (Vector const& mins, Vector const& maxs), mins, maxs);
+	VPROXY(IsBoxInViewCluster, 32, bool, (Vector const& mins, Vector const& maxs), mins, maxs);
 	VPROXY(GetGameDirectory, 35, char const*, (void));
-	VPROXY(IsOccluded, 69, bool, (Vector const&, Vector const&));
+	VPROXY(IsOccluded, 69, bool, (Vector const& vecAbsMins, Vector const& vecAbsMaxs), vecAbsMins, vecAbsMaxs);
 	VPROXY(GetNetChannelInfo, 72, INetChannelInfo*, (void));
 	VPROXY(IsPlayingTimeDemo, 78, bool, (void));
-	VPROXY(ExecuteClientCmd, 102, void, (char const*));
-	VPROXY(ClientCmd_Unrestricted, 106, void, (char const*));
-	VPROXY(SetRestrictServerCommands, 107, void, (bool));
-	VPROXY(SetRestrictClientCommands, 108, void, (bool));
-	VPROXY(GMOD_RawClientCmd_Unrestricted, 140, void, (char const*));
+	VPROXY(ExecuteClientCmd, 102, void, (char const* szCmdString), szCmdString);
+	VPROXY(ClientCmd_Unrestricted, 106, void, (char const* szCmdString), szCmdString);
+	VPROXY(SetRestrictServerCommands, 107, void, (bool bRestrict), bRestrict);
+	VPROXY(SetRestrictClientCommands, 108, void, (bool bRestrict), bRestrict);
+	VPROXY(GMOD_RawClientCmd_Unrestricted, 140, void, (char const* szCmdString), szCmdString);
 	 
 	INetChannel* GetNetChannel() { return reinterpret_cast<INetChannel*>(GetNetChannelInfo()); }
 }; 

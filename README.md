@@ -16,9 +16,24 @@ ded.SetInterpolation(false)
 ded.SetSequenceInterpolation(false)
 ```
 
+### Lua Hooks
+PreCreateMove  
+PostCreateMove  
+PreFrameStageNotify  
+PostFrameStageNotify  
+PreRunCommand  
+PostRunCommand  
+PreDrawModelExecute  
+PostDrawModelExecute  
+SendNetMsg  
+ShouldBlockMove  
+ShouldUpdateAnimation  
+OnImpact  
+
 ### Lua API
 ServerCmd  
 ClientCmd  
+GetViewAngles  
 SetViewAngles  
 ExecuteClientCmd  
 RawClientCmdUnrestricted  

@@ -20,5 +20,5 @@ public:
 	VPROXY(GetAllClasses, 8, ClientClass*, (void));
 	VPROXY(WriteUsercmdDeltaToBuffer, 23, bool, (bf_write* buf, int from, int to, bool isnewcommand), buf, from, to, isnewcommand);
 	VPROXY(CreateMove, 21, void, (int sequence_number, float input_sample_frametime, bool active), sequence_number, input_sample_frametime, active);
-	VPROXY(View_Render, 26, void, (void*));
+	VPROXY(View_Render, 26, void, (void* rect), rect);
 };

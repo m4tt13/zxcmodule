@@ -48,11 +48,20 @@ LUA_FUNCTION(ClientCmd) {
 	return 0;
 }
 
+LUA_FUNCTION(GetViewAngles) {
+	Angle va;
+	interfaces::engineClient->GetViewAngles(&va);
+
+	LUA->PushAngle(va);
+
+	return 1;
+}
+
 LUA_FUNCTION(SetViewAngles) {
 	LUA->CheckType(1, Type::Angle);
 
 	Angle va = LUA->GetAngle(1);
-	interfaces::engineClient->SetViewAngles(va);
+	interfaces::engineClient->SetViewAngles(&va);
 
 	return 0;
 }
@@ -1091,6 +1100,7 @@ GMOD_MODULE_OPEN() {
 	LUA->CreateTable();
 		PushApiFunction("ServerCmd", ServerCmd);
 		PushApiFunction("ClientCmd", ClientCmd);
+		PushApiFunction("GetViewAngles", GetViewAngles);
 		PushApiFunction("SetViewAngles", SetViewAngles);
 		PushApiFunction("ExecuteClientCmd", ExecuteClientCmd);
 		PushApiFunction("RawClientCmdUnrestricted", RawClientCmdUnrestricted);
