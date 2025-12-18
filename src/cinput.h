@@ -13,8 +13,8 @@ public:
 	}
 
 	CUserCmd* GetCommand(int seq) {
-		CUserCmd* verifiedCmd = reinterpret_cast<CUserCmd*>(reinterpret_cast<std::uintptr_t>(GetCommands()) + 324 * (seq % MULTIPLAYER_BACKUP));
-		return verifiedCmd;
+		CUserCmd* cmd = reinterpret_cast<CUserCmd*>(reinterpret_cast<std::uintptr_t>(GetCommands()) + 324 * (seq % MULTIPLAYER_BACKUP));
+		return cmd;
 	}
 
 	CVerifiedUserCmd* GetVerifiedCommands() {

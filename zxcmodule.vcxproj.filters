@@ -219,6 +219,9 @@
     <ClInclude Include="3rd\GarrysMod\Lua\PooledStrings.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
+    <ClInclude Include="src\basehandle.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\bitbuf.cpp">

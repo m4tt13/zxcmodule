@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include "angle.h"
+#include "basehandle.h"
 
 class CBasePlayer;
 
@@ -11,7 +12,7 @@ class CMoveData {
 public:
 	bool m_bFirstRunOfFunctions : 1; //0x0000
 	bool m_bGameCodeMovedPlayer : 1; //0x0000
-	uint32_t m_nPlayerHandle; //0x0004
+	CBaseHandle m_nPlayerHandle; //0x0004
 	int32_t m_nImpulseCommand; //0x0008
 	Angle m_vecViewAngles; //0x000C
 	Angle m_vecAbsViewAngles; //0x0018

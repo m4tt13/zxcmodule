@@ -5,7 +5,7 @@
 #include "interfaces.h"
 #include "util.h"
 
-class CBaseEntity;
+class CBasePlayer;
 class CUserCmd;
 
 class CPrediction {
@@ -27,14 +27,14 @@ public:
 	virtual bool	InPrediction(void) = 0;
 	virtual bool	IsFirstTimePredicted(void) = 0;
 	virtual int		GetIncomingPacketNumber(void) = 0;
-	virtual void	RunCommand_(CBaseEntity* player, CUserCmd* ucmd, IMoveHelper* moveHelper) = 0;
-	virtual void	SetupMove(CBaseEntity* player, CUserCmd* ucmd, IMoveHelper* pHelper, CMoveData* move) = 0;
-	virtual void	FinishMove(CBaseEntity* player, CUserCmd* ucmd, CMoveData* move) = 0;
-	virtual void	SetIdealPitch(CBaseEntity* player, const Vector& origin, const Angle& angles, const Vector& viewheight) = 0;
+	virtual void	RunCommand_(CBasePlayer* player, CUserCmd* ucmd, IMoveHelper* moveHelper) = 0;
+	virtual void	SetupMove(CBasePlayer* player, CUserCmd* ucmd, IMoveHelper* pHelper, CMoveData* move) = 0;
+	virtual void	FinishMove(CBasePlayer* player, CUserCmd* ucmd, CMoveData* move) = 0;
+	virtual void	SetIdealPitch(CBasePlayer* player, const Vector& origin, const Angle& angles, const Vector& viewheight) = 0;
 	virtual void	_Update(bool received_new_world_update, bool validframe, int incoming_acknowledged, int outgoing_command) = 0;
 
 	// For hooking
-	VPROXY(RunCommand, 17, void, (CBaseEntity* player, CUserCmd* ucmd, IMoveHelper* moveHelper), player, ucmd, moveHelper);
+	VPROXY(RunCommand, 17, void, (CBasePlayer* player, CUserCmd* ucmd, IMoveHelper* moveHelper), player, ucmd, moveHelper);
 
 	OFFSETVAR(bool, GetInPrediction, 0x0C);
 	OFFSETVAR(bool, GetIsFirstTimePredicted, 0x0D);

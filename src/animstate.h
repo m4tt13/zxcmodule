@@ -1,12 +1,10 @@
 #pragma once
 
-#include "vmt.h"
+#include "util.h"
 
 class CBasePlayerAnimState {
 public:
-	void Update(float eyeYaw, float eyePitch) noexcept {
-		return vmt::call<void>((void*)this, 4, eyeYaw, eyePitch);
-	}
+	VPROXY(Update, 4, void, (float eyeYaw, float eyePitch), eyeYaw, eyePitch);
 
 public:
 	char pad_0000[124]; //0x0000

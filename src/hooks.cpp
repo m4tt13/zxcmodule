@@ -128,15 +128,15 @@ namespace detours {
 	}
 
 	// RunCommand 
-	using RunCommandFn = void(__fastcall*)(CPrediction* self, CBaseEntity* player, CUserCmd* ucmd, IMoveHelper* moveHelper);
+	using RunCommandFn = void(__fastcall*)(CPrediction* self, CBasePlayer* player, CUserCmd* ucmd, IMoveHelper* moveHelper);
 	RunCommandFn RunCommandOriginal = nullptr;
 	
-	void __fastcall RunCommandHookFunc(CPrediction* self, CBaseEntity* player, CUserCmd* ucmd, IMoveHelper* moveHelper) {
+	void __fastcall RunCommandHookFunc(CPrediction* self, CBasePlayer* player, CUserCmd* ucmd, IMoveHelper* moveHelper) {
 		if (luaInit) {
 			auto* lua = interfaces::clientLua;
 
 			if (LuaHelpers::PushHookRun(lua, "PreRunCommand" ) != 0) {
-				lua->PushNumber(player->GetClientNetworkable()->entIndex());
+				player->PushEntity();
 				lua->PushUserType(ucmd, Type::UserCmd);
 
 				LuaHelpers::CallHookRun(lua, 2, 0);
@@ -149,7 +149,7 @@ namespace detours {
 			auto* lua = interfaces::clientLua;
 
 			if (LuaHelpers::PushHookRun(lua, "PostRunCommand" ) != 0) {
-				lua->PushNumber(player->GetClientNetworkable()->entIndex());
+				player->PushEntity();
 				lua->PushUserType(ucmd, Type::UserCmd);
 
 				LuaHelpers::CallHookRun(lua, 2, 0);
@@ -314,7 +314,7 @@ namespace detours {
 		if (luaInit) {
 			auto* lua = interfaces::clientLua;
 
-			if (LuaHelpers::PushHookRun(lua, "ShouldBlockMove" ) != 0) {
+			if (LuaHelpers::PushHookRun(lua, "OnMove" ) != 0) {
 				bool dontcall = false;
 				if (LuaHelpers::CallHookRun(lua, 0, 1))
 				{
@@ -336,10 +336,10 @@ namespace detours {
 	}
 
 	// Interpolate
-	using InterpolateFn = bool(__fastcall*)(CBaseEntity* self, float currentTime);
+	using InterpolateFn = bool(__fastcall*)(CBasePlayer* self, float currentTime);
 	InterpolateFn InterpolateOriginal = nullptr;
 
-	bool __fastcall InterpolateHookFunc(CBaseEntity* self, float currentTime) {
+	bool __fastcall InterpolateHookFunc(CBasePlayer* self, float currentTime) {
 		if (globals::shouldInterpolate)
 			return InterpolateOriginal(self, currentTime);
 
@@ -361,7 +361,7 @@ namespace detours {
 			auto* lua = interfaces::clientLua;
 
 			if (LuaHelpers::PushHookRun(lua, "ShouldUpdateAnimation" ) != 0) {
-				lua->PushNumber(self->GetClientNetworkable()->entIndex());
+				self->PushEntity();
 
 				if (LuaHelpers::CallHookRun(lua, 1, 2))
 				{

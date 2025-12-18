@@ -10,10 +10,10 @@
 	retType methodName args noexcept { return vmt::call<retType>((void*)this, methodIndex, ## __VA_ARGS__); }
 
 #define NETVAR_(type, tableName, propName, funcName)												\
-	type& funcName() const noexcept {																\
-		static const netvar_t netvar = netvars::netvars[#tableName "->" #propName];					\
-		assert(netvar.offset != 0);																	\
-		return *reinterpret_cast<type*>(reinterpret_cast<std::uintptr_t>(this) + netvar.offset);	\
+	type& funcName() const noexcept {														\
+		static const int offset = netvars::netvars[#tableName "->" #propName];				\
+		assert(offset != 0);																\
+		return *reinterpret_cast<type*>(reinterpret_cast<std::uintptr_t>(this) + offset);	\
 	}
 
 #define NETVAR(type, tblname, propname) NETVAR_(type, tblname, propname, propname)

@@ -47,6 +47,7 @@
     <ClInclude Include="3rd\Platform.hpp" />
     <ClInclude Include="src\angle.h" />
     <ClInclude Include="src\animstate.h" />
+    <ClInclude Include="src\basehandle.h" />
     <ClInclude Include="src\bitbuf.h" />
     <ClInclude Include="src\chlclient.h" />
     <ClInclude Include="src\cinput.h" />

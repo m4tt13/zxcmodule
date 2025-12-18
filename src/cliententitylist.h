@@ -4,19 +4,19 @@
 #include <cstdint>
 
 class CBaseEntity;
-using CBaseHandle = uint32_t;
+class CBaseHandle;
 
 class IClientEntityList {
 public:
 	// Get IClientNetworkable interface for specified entity
 	virtual void* GetClientNetworkable(int entnum) = 0;
-	virtual void* GetClientNetworkableFromHandle(CBaseHandle hEnt) = 0;
-	virtual void* GetClientUnknownFromHandle(CBaseHandle hEnt) = 0;
+	virtual void* GetClientNetworkableFromHandle(CBaseHandle& hEnt) = 0;
+	virtual void* GetClientUnknownFromHandle(CBaseHandle& hEnt) = 0;
 
 	// NOTE: This function is only a convenience wrapper.
 	// It returns GetClientNetworkable(entnum)->GetIClientEntity().
 	virtual CBaseEntity* GetClientEntity(int entnum) = 0;
-	virtual CBaseEntity* GetClientEntityFromHandle(CBaseHandle hEnt) = 0;
+	virtual CBaseEntity* GetClientEntityFromHandle(CBaseHandle& hEnt) = 0;
 
 	// Returns number of entities currently in use
 	virtual int				NumberOfEntities(bool bIncludeNonNetworkable) = 0;

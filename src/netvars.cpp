@@ -3,7 +3,7 @@
 #include "chlclient.h"
  
 namespace netvars {
-	std::unordered_map<std::string, netvar_t> netvars;
+	std::unordered_map<std::string, int> netvars;
 
 	namespace detail {
 		void loadFromTable(RecvTable* tbl, char* tableName, int offset = 0) {
@@ -16,12 +16,7 @@ namespace netvars {
 				}
 
 				std::string key(tableName + std::string("->") + prop.m_pVarName);
-
-				netvar_t netvar;
-				netvar.type = prop.m_RecvType;
-				netvar.offset = prop.m_Offset + offset;
-
-				netvars[key] = netvar;
+				netvars[key] = prop.m_Offset + offset;
 			}
 		}
 	}

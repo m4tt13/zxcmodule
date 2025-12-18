@@ -9,6 +9,8 @@
 #include "varmap.h"
 #include "cliententitylist.h"
 
+class CBaseHandle;
+class CBaseAnimating;
 class CBasePlayerAnimState;
 class CUserCmd;
 class matrix3x4_t;
@@ -52,6 +54,12 @@ public:
 	IClientUnknown* GetClientUnknown() { return reinterpret_cast<IClientUnknown*>(this); }
 	IClientNetworkable* GetClientNetworkable() { return vmt::call<IClientNetworkable*>(this, 4); }
 
+	VPROXY(GetBaseAnimating, 39, CBaseAnimating*, (void));
+	VPROXY(IsPlayer, 131, bool, (void));
+	VPROXY(PushEntity, 173, void, (void));
+
+	NETVAR(float, DT_BaseEntity, m_flSimulationTime);
+
 	//NETVAR_(Vector, DT_BaseEntity, m_vecAbsVelocity[0], GetAbsVelocity);
 	NETVAR_(Vector, DT_BaseEntity, m_vecVelocity[0], GetVelocity);
 	NETVAR_(Vector, DT_BaseEntity, m_vecOrigin, GetAbsOrigin);
@@ -71,9 +79,9 @@ public:
 class CBaseAnimating : public CBaseEntity {
 public:
 	VPROXY(SetupBones, 16, bool, (matrix3x4_t* pBoneToWorldOut, int nMaxBones, int boneMask), pBoneToWorldOut, nMaxBones, boneMask);
+	VPROXY(UpdateClientsideAnimation, 237, void, (void)); // wrong index ( 297 )
 
 	OFFSETVAR(void*, m_hitboxBoneCacheHandle, 0x1AA0);
-	OFFSETVAR(CBasePlayerAnimState*, GetAnimState, 0x3668);
 	NETVAR(bool, DT_BaseAnimating, m_bClientSideAnimation);
 	NETVAR(float, DT_BaseAnimating, m_flModelScale);
 };
@@ -88,10 +96,9 @@ public:
 	bool IsInWater() { return GetWaterLevel() != WaterLevel::NotInWater; }
 	bool IsInNoclip() { return GetMoveType() == MoveType::NOCLIP; }
 
-	VPROXY(UpdateClientsideAnimation, 237, void, (void)); // wrong index ( 297 )
-
 	// CPrediction__RunCommand 2 line
 	OFFSETVAR(CUserCmd*, GetCurrentCommand, 0x2CA0); 
+	OFFSETVAR(CBasePlayerAnimState*, GetAnimState, 0x3668);
 
 	NETVAR(char, DT_GMOD_Player, m_nWaterLevel);
 
@@ -102,7 +109,6 @@ public:
 	NETVAR_(Vector, DT_BasePlayer, m_vecViewOffset[0], GetViewOffset);
 
 	NETVAR(int, DT_BasePlayer, m_nTickBase);
-	NETVAR(float, DT_BasePlayer, m_flSimulationTime);
 	NETVAR(int, DT_BasePlayer, m_fFlags);
 	NETVAR(int, DT_BasePlayer, m_hActiveWeapon);
 
@@ -114,3 +120,11 @@ public:
 
 	NETVAR(CBaseEntity*, DT_BasePlayer, m_hGroundEntity);
 };
+
+inline CBasePlayer *ToBasePlayer( CBaseEntity *pEntity )
+{
+	if ( !pEntity || !pEntity->IsPlayer() )
+		return nullptr;
+
+	return static_cast<CBasePlayer *>( pEntity );
+}

@@ -25,8 +25,20 @@ using namespace GarrysMod::Lua;
 #include "interfaces.h"
 #include "cliententitylist.h"
 #include "entity.h"
- 
+
 #include "hooks.h"
+
+#define GET_ENTITY(STACK_POS) \
+	LUA->CheckType(STACK_POS, Type::Entity); \
+	CBaseEntity *Ent = nullptr; \
+	CBaseHandle *hEnt = LUA->GetUserType<CBaseHandle>(STACK_POS, Type::Entity); \
+	if (hEnt) Ent = interfaces::entityList->GetClientEntityFromHandle(*hEnt); \
+	if (!Ent) LUA->ThrowError("Tried to use a NULL entity!");
+
+#define GET_PLAYER(STACK_POS) \
+	GET_ENTITY(STACK_POS) \
+	CBasePlayer *Ply = ToBasePlayer(Ent); \
+	if (!Ply) LUA->ThrowError("Player entity is NULL or not a player (!?)");
 
 std::vector<std::unique_ptr<SpoofedConVar>> spoofedConVars;
 
@@ -405,8 +417,13 @@ LUA_FUNCTION(PredictSpread) {
 
 	do
 	{
-		x = vstdlib::RandomFloat(-1, 1) * flatness + vstdlib::RandomFloat(-1, 1) * (1 - flatness);
-		y = vstdlib::RandomFloat(-1, 1) * flatness + vstdlib::RandomFloat(-1, 1) * (1 - flatness);
+		float r1 = vstdlib::RandomFloat(-1, 1);
+		float r2 = vstdlib::RandomFloat(-1, 1);
+		float r3 = vstdlib::RandomFloat(-1, 1);
+		float r4 = vstdlib::RandomFloat(-1, 1);
+
+		x = r2 * flatness + r1 * (1 - flatness);
+		y = r4 * flatness + r3 * (1 - flatness);
 		if (shotBias < 0)
 		{
 			x = (x >= 0) ? 1.0 - x : -1.0 - x;
@@ -448,10 +465,9 @@ LUA_FUNCTION(RunPrediction) {
 
 // Simulation 
 LUA_FUNCTION(StartSimulation) {
-	LUA->CheckNumber(1);
+	GET_PLAYER(1);
 
-	CBasePlayer* ply = reinterpret_cast<CBasePlayer*>(interfaces::entityList->GetClientEntity(LUA->GetNumber(1)));
-	g_simulation.Start(ply);
+	g_simulation.Start(Ply);
 
 	return 0;
 }
@@ -666,7 +682,7 @@ LUA_FUNCTION(NetSetConVar) {
 	netMsg.write.WriteString(conVar);
 	netMsg.write.WriteString(value);
 
-	netChan->SendNetMsg(netMsg, true);
+	netChan->SendNetMsg(&netMsg, true);
 
 	return 0;
 }
@@ -688,7 +704,7 @@ LUA_FUNCTION(NetSetConVarUnreliable) {
 	netMsg.write.WriteString(conVar);
 	netMsg.write.WriteString(value);
 
-	netChan->SendNetMsg(netMsg, false);
+	netChan->SendNetMsg(&netMsg, false);
 
 	return 0;
 }
@@ -706,7 +722,7 @@ LUA_FUNCTION(NetDisconnect) {
 	netMsg.write.WriteUInt(static_cast<uint32_t>(NetMessage::net_Disconnect), NET_MESSAGE_BITS);
 	netMsg.write.WriteString(str);
 
-	netChan->SendNetMsg(netMsg, true);
+	netChan->SendNetMsg(&netMsg, true);
 
 	return 0;
 }
@@ -915,60 +931,180 @@ LUA_FUNCTION_GETSET(OutReliableState, Number, interfaces::engineClient->GetNetCh
 LUA_FUNCTION_GETSET(InReliableState, Number, interfaces::engineClient->GetNetChannel()->m_nInReliableState);
 
 // Entity 
-LUA_FUNCTION(GetNetworkedVar) {
-	LUA->CheckNumber(1);
+LUA_FUNCTION(GetNetworkedVarInt) {
+	GET_ENTITY(1);
 	LUA->CheckString(2);
 	LUA->CheckString(3);
-
-	CBasePlayer* Ply = reinterpret_cast<CBasePlayer*>(interfaces::entityList->GetClientEntity(LUA->GetNumber(1)));
 
 	std::string key(LUA->GetString(2) + std::string("->") + LUA->GetString(3));
 	const auto& it = netvars::netvars.find(key);
 
 	if (it == netvars::netvars.end())
 	{
-		LUA->PushBool(false);
+		LUA->PushNil();
 		return 1;
 	}
 
-	const auto& netvar = it->second;
+	LUA->PushNumber(*reinterpret_cast<int32_t*>(reinterpret_cast<std::uintptr_t>(Ent) + it->second));
 
-	switch (netvar.type)
+	return 1;
+}
+
+LUA_FUNCTION(GetNetworkedVarFloat) {
+	GET_ENTITY(1);
+	LUA->CheckString(2);
+	LUA->CheckString(3);
+
+	std::string key(LUA->GetString(2) + std::string("->") + LUA->GetString(3));
+	const auto& it = netvars::netvars.find(key);
+
+	if (it == netvars::netvars.end())
 	{
-	case SendPropType::DPT_Int:
-		LUA->PushNumber(*reinterpret_cast<int32_t*>(reinterpret_cast<std::uintptr_t>(Ply) + netvar.offset));
-		break;
-	case SendPropType::DPT_Float:
-		LUA->PushNumber(*reinterpret_cast<float*>(reinterpret_cast<std::uintptr_t>(Ply) + netvar.offset));
-		break;
-	case SendPropType::DPT_Vector:
-		LUA->PushVector(*reinterpret_cast<Vector*>(reinterpret_cast<std::uintptr_t>(Ply) + netvar.offset));
-		break;
-	case SendPropType::DPT_String:
-		LUA->PushString(*reinterpret_cast<const char**>(reinterpret_cast<std::uintptr_t>(Ply) + netvar.offset));
-		break;
-	default:
-		LUA->PushBool(false);
-		break;
+		LUA->PushNil();
+		return 1;
+	}
+
+	LUA->PushNumber(*reinterpret_cast<float*>(reinterpret_cast<std::uintptr_t>(Ent) + it->second));
+
+	return 1;
+}
+
+LUA_FUNCTION(GetNetworkedVarBool) {
+	GET_ENTITY(1);
+	LUA->CheckString(2);
+	LUA->CheckString(3);
+
+	std::string key(LUA->GetString(2) + std::string("->") + LUA->GetString(3));
+	const auto& it = netvars::netvars.find(key);
+
+	if (it == netvars::netvars.end())
+	{
+		LUA->PushNil();
+		return 1;
+	}
+
+	LUA->PushBool(*reinterpret_cast<bool*>(reinterpret_cast<std::uintptr_t>(Ent) + it->second));
+
+	return 1;
+}
+
+LUA_FUNCTION(GetNetworkedVarString) {
+	GET_ENTITY(1);
+	LUA->CheckString(2);
+	LUA->CheckString(3);
+
+	std::string key(LUA->GetString(2) + std::string("->") + LUA->GetString(3));
+	const auto& it = netvars::netvars.find(key);
+
+	if (it == netvars::netvars.end())
+	{
+		LUA->PushNil();
+		return 1;
+	}
+
+	LUA->PushString(*reinterpret_cast<const char**>(reinterpret_cast<std::uintptr_t>(Ent) + it->second));
+
+	return 1;
+}
+
+LUA_FUNCTION(GetNetworkedVarVector) {
+	GET_ENTITY(1);
+	LUA->CheckString(2);
+	LUA->CheckString(3);
+
+	std::string key(LUA->GetString(2) + std::string("->") + LUA->GetString(3));
+	const auto& it = netvars::netvars.find(key);
+
+	if (it == netvars::netvars.end())
+	{
+		LUA->PushNil();
+		return 1;
+	}
+
+	LUA->PushVector(*reinterpret_cast<Vector*>(reinterpret_cast<std::uintptr_t>(Ent) + it->second));
+
+	return 1;
+}
+
+LUA_FUNCTION(GetNetworkedVarAngle) {
+	GET_ENTITY(1);
+	LUA->CheckString(2);
+	LUA->CheckString(3);
+
+	std::string key(LUA->GetString(2) + std::string("->") + LUA->GetString(3));
+	const auto& it = netvars::netvars.find(key);
+
+	if (it == netvars::netvars.end())
+	{
+		LUA->PushNil();
+		return 1;
+	}
+
+	LUA->PushAngle(*reinterpret_cast<Angle*>(reinterpret_cast<std::uintptr_t>(Ent) + it->second));
+
+	return 1;
+}
+
+LUA_FUNCTION(GetNetworkedVarEnt) {
+	GET_ENTITY(1);
+	LUA->CheckString(2);
+	LUA->CheckString(3);
+
+	std::string key(LUA->GetString(2) + std::string("->") + LUA->GetString(3));
+	const auto& it = netvars::netvars.find(key);
+
+	if (it == netvars::netvars.end())
+	{
+		LUA->PushNil();
+		return 1;
+	}
+
+	CBaseEntity* ent = interfaces::entityList->GetClientEntityFromHandle(*reinterpret_cast<CBaseHandle*>(reinterpret_cast<std::uintptr_t>(Ent) + it->second));
+
+	if (ent)
+	{
+		ent->PushEntity();
+	}
+	else
+	{
+		LUA->PushSpecial(SPECIAL_GLOB);
+		LUA->GetField(-1, "NULL");
+		LUA->Remove(-2);
 	}
 
 	return 1;
 }
 
 LUA_FUNCTION(GetSimulationTime) {
-	LUA->CheckNumber(1);
+	GET_ENTITY(1);
 
-	CBasePlayer* Ply = reinterpret_cast<CBasePlayer*>(interfaces::entityList->GetClientEntity(LUA->GetNumber(1)));
-	
-	LUA->PushNumber(Ply->m_flSimulationTime());
+	LUA->PushNumber(Ent->m_flSimulationTime());
 
 	return 1;
 }
 
-LUA_FUNCTION(GetTargetLowerBodyYaw) { 
-	LUA->CheckNumber(1);
+LUA_FUNCTION(InvalidateBoneCache) {
+	GET_ENTITY(1);
 
-	CBasePlayer* Ply = reinterpret_cast<CBasePlayer*>(interfaces::entityList->GetClientEntity(LUA->GetNumber(1)));
+	CBaseAnimating *Anim = Ent->GetBaseAnimating();
+
+	if (Anim)
+	{
+		using Studio_GetBoneCacheFn = void*(__fastcall*)(void*);
+		static Studio_GetBoneCacheFn Studio_GetBoneCache = (Studio_GetBoneCacheFn)findPattern("client.dll", "48 89 5C 24 ?? 57 48 83 EC ?? 48 8B F9 FF 15 ?? ?? ?? ?? 8B 15 ?? ?? ?? ?? 48 8B D8 3B C2 74 ?? 45 33 C0 48 8D 0D ?? ?? ?? ?? 8B D3 FF 15 ?? ?? ?? ?? 84 C0 75 ?? F3 90 45 33 C0 48 8D 0D ?? ?? ?? ?? 8B D3 FF 15 ?? ?? ?? ?? EB ?? 90 8B 05 ?? ?? ?? ?? FF C0 89 05 ?? ?? ?? ?? 48 8B D7 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 8B 15");
+
+		void *pcache = Studio_GetBoneCache(Anim->m_hitboxBoneCacheHandle());
+
+		if (pcache)
+			*(float*)pcache = -1.0f;
+	}
+
+	return 0;
+}
+
+LUA_FUNCTION(GetTargetLowerBodyYaw) { 
+	GET_PLAYER(1);
+
 	CBasePlayerAnimState* animState = Ply->GetAnimState();
 
 	LUA->PushNumber(animState->m_flGoalFeetYaw);
@@ -977,9 +1113,8 @@ LUA_FUNCTION(GetTargetLowerBodyYaw) {
 }
 
 LUA_FUNCTION(GetCurrentLowerBodyYaw) {
-	LUA->CheckNumber(1);
+	GET_PLAYER(1);
 
-	CBasePlayer* Ply = reinterpret_cast<CBasePlayer*>(interfaces::entityList->GetClientEntity(LUA->GetNumber(1)));
 	CBasePlayerAnimState* animState = Ply->GetAnimState();
 
 	LUA->PushNumber(animState->m_flCurrentFeetYaw);
@@ -988,10 +1123,9 @@ LUA_FUNCTION(GetCurrentLowerBodyYaw) {
 }
 
 LUA_FUNCTION(SetTargetLowerBodyYaw) {
-	LUA->CheckNumber(1);
+	GET_PLAYER(1);
 	LUA->CheckNumber(2);
 
-	CBasePlayer* Ply = reinterpret_cast<CBasePlayer*>(interfaces::entityList->GetClientEntity(LUA->GetNumber(1)));
 	CBasePlayerAnimState* animState = Ply->GetAnimState();
 
 	animState->m_flGoalFeetYaw = LUA->GetNumber(2);
@@ -1000,10 +1134,9 @@ LUA_FUNCTION(SetTargetLowerBodyYaw) {
 }
 
 LUA_FUNCTION(SetCurrentLowerBodyYaw) {
-	LUA->CheckNumber(1);
+	GET_PLAYER(1);
 	LUA->CheckNumber(2);
 
-	CBasePlayer* Ply = reinterpret_cast<CBasePlayer*>(interfaces::entityList->GetClientEntity(LUA->GetNumber(1)));
 	CBasePlayerAnimState* animState = Ply->GetAnimState();
 
 	animState->m_flCurrentFeetYaw = LUA->GetNumber(2);
@@ -1012,20 +1145,21 @@ LUA_FUNCTION(SetCurrentLowerBodyYaw) {
 }
 
 LUA_FUNCTION(UpdateClientAnimation) {
-	LUA->CheckNumber(1);
+	GET_ENTITY(1);
 
-	CBasePlayer* Ply = reinterpret_cast<CBasePlayer*>( interfaces::entityList->GetClientEntity( LUA->GetNumber(1) ) );
-	Ply->UpdateClientsideAnimation();
+	CBaseAnimating *Anim = Ent->GetBaseAnimating();
+
+	if (Anim)
+		Anim->UpdateClientsideAnimation();
 
 	return 0;
 }
 
 LUA_FUNCTION(UpdateAnimations) {
-	LUA->CheckNumber(1);
+	GET_PLAYER(1);
 	LUA->CheckNumber(2);
 	LUA->CheckNumber(3);
 
-	CBasePlayer* Ply = reinterpret_cast<CBasePlayer*>(interfaces::entityList->GetClientEntity(LUA->GetNumber(1)));
 	CBasePlayerAnimState* animState = Ply->GetAnimState();
 
 	animState->Update( LUA->GetNumber(2), LUA->GetNumber(3) );
@@ -1034,9 +1168,7 @@ LUA_FUNCTION(UpdateAnimations) {
 }
 
 LUA_FUNCTION(GetTickBase) {
-	LUA->CheckNumber(1);
-
-	CBasePlayer* Ply = reinterpret_cast<CBasePlayer*>( interfaces::entityList->GetClientEntity( LUA->GetNumber(1) ) );
+	GET_PLAYER(1);
 
 	LUA->PushNumber(Ply->m_nTickBase());
 
@@ -1044,27 +1176,10 @@ LUA_FUNCTION(GetTickBase) {
 }
 
 LUA_FUNCTION(SetTickBase) {
-	LUA->CheckNumber(1);
+	GET_PLAYER(1);
 	LUA->CheckNumber(2);
 
-	CBasePlayer* Ply = reinterpret_cast<CBasePlayer*>( interfaces::entityList->GetClientEntity( LUA->GetNumber(1) ) );
 	Ply->m_nTickBase() = static_cast<int>( LUA->GetNumber(2) );
-
-	return 0;
-}
-
-LUA_FUNCTION(InvalidateBoneCache) {
-	LUA->CheckNumber(1);
-
-	CBasePlayer* Ply = reinterpret_cast<CBasePlayer*>( interfaces::entityList->GetClientEntity(LUA->GetNumber(1)));
-
-	using Studio_GetBoneCacheFn = void*(__fastcall*)(void*);
-	static Studio_GetBoneCacheFn Studio_GetBoneCache = (Studio_GetBoneCacheFn)findPattern("client.dll", "48 89 5C 24 ?? 57 48 83 EC ?? 48 8B F9 FF 15 ?? ?? ?? ?? 8B 15 ?? ?? ?? ?? 48 8B D8 3B C2 74 ?? 45 33 C0 48 8D 0D ?? ?? ?? ?? 8B D3 FF 15 ?? ?? ?? ?? 84 C0 75 ?? F3 90 45 33 C0 48 8D 0D ?? ?? ?? ?? 8B D3 FF 15 ?? ?? ?? ?? EB ?? 90 8B 05 ?? ?? ?? ?? FF C0 89 05 ?? ?? ?? ?? 48 8B D7 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 8B 15");
-
-	void *pcache = Studio_GetBoneCache(Ply->m_hitboxBoneCacheHandle());
-
-	if (pcache)
-		*(float*)pcache = -1.0f;
 
 	return 0;
 }
@@ -1174,7 +1289,13 @@ GMOD_MODULE_OPEN() {
 		//PushApiFunction("Read", Read);
 		//PushApiFunction("Write", Write);
 
-		PushApiFunction("GetNetworkedVar", GetNetworkedVar);
+		PushApiFunction("GetNetworkedVarInt", GetNetworkedVarInt);
+		PushApiFunction("GetNetworkedVarFloat", GetNetworkedVarFloat);
+		PushApiFunction("GetNetworkedVarBool", GetNetworkedVarBool);
+		PushApiFunction("GetNetworkedVarString", GetNetworkedVarString);
+		PushApiFunction("GetNetworkedVarVector", GetNetworkedVarVector);
+		PushApiFunction("GetNetworkedVarAngle", GetNetworkedVarAngle);
+		PushApiFunction("GetNetworkedVarEnt", GetNetworkedVarEnt);
 		PushApiFunction("GetTickBase", GetTickBase);
 		PushApiFunction("SetTickBase", SetTickBase);
 		PushApiFunction("UpdateAnimations", UpdateAnimations);
@@ -1235,6 +1356,7 @@ GMOD_MODULE_OPEN() {
 
 		PushApiFunction("PushSpecial", PushSpecial);
 	LUA->SetField(-2, "ded");
+	LUA->Pop(1);
 
 	return 0;
 }

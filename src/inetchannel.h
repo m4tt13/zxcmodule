@@ -113,32 +113,24 @@ class INetMessage;
 
 class INetChannel : public INetChannelInfo {
 public:
-
-	bool SendNetMsg(INetMessage& msg, bool bForceReliable = false, bool bVoice = false) noexcept {
-		return vmt::call<bool, INetMessage&>((void*)this, 40, msg, bForceReliable, bVoice);
-	}
-
-	bool SendFile(const char* filename, unsigned int transferID) noexcept {
-		return vmt::call<bool>((void*)this, 42, filename, transferID);
-	}
-
-	unsigned int RequestFile(RequestFile_t type, CRC32_t crc) noexcept {
-		return vmt::call<unsigned int>((void*)this, 62, type, crc);
-	}
-
 	VPROXY(SetDataRate, 27, void, (float rate), rate);
+	VPROXY(SetTimeout, 31, void, (float seconds), seconds);
 	VPROXY(SetChallengeNr, 33, void, (unsigned int chnr), chnr);
+	VPROXY(Shutdown, 36, void, (char const* reason), reason);
+	VPROXY(SendNetMsg, 40, bool, (INetMessage* msg, bool bForceReliable = false, bool bVoice = false), msg, bForceReliable, bVoice);
+	VPROXY(SendFile, 42, bool, (const char* filename, unsigned int transferID), filename, transferID);
+	VPROXY(SetChoked, 45, void, (void));
+	VPROXY(SendDatagram, 46, int, (bf_write* data), data);
 	VPROXY(SetCompressionMode, 61, void, (bool bUseCompression), bUseCompression);
+	VPROXY(RequestFile, 62, unsigned int, (RequestFile_t type, CRC32_t crc), type, crc);
 	VPROXY(SetInterpolationAmount, 66, void, (float flInterpolationAmount), flInterpolationAmount);
 	VPROXY(SetRemoteFramerate, 67, void, (float flFrameTime, float flFrameTimeStdDeviation), flFrameTime, flFrameTimeStdDeviation);
 	VPROXY(SetMaxRoutablePayloadSize, 68, void, (int nSplitSize), nSplitSize);
-	VPROXY(SetChoked, 45, void, (void));
-	VPROXY(Shutdown, 36, void, (char const* reason), reason);
-	VPROXY(SetTimeout, 31, void, (float seconds), seconds);
-	VPROXY(SendDatagram, 46, int, (bf_write* data), data);
 	  
 public:
-	int			m_ConnectionState;
+	bool		m_bProcessingMessages;
+	bool		m_bClearedDuringProcessing;
+	bool		m_bShouldDelete;
 
 	// last send outgoing sequence number
 	int			m_nOutSequenceNr;
@@ -154,11 +146,11 @@ public:
 
 	// number of choked packets
 	int			m_nChokedPackets;
+
+	uint8_t		pad_0001[9272];
+
+	// packets lost before getting last update (was global net_drop)
 	int			m_PacketDrop;
-
-	uint8_t pad_0001[42];
-
-	bf_write m_StreamUnreliable;
 };
 
 class INetMessage {
