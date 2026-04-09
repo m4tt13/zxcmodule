@@ -7,6 +7,7 @@ class matrix3x4_t;
 class Ray_t;
 class IMaterial;
 class Color;
+class IClientRenderable;
 
 struct model_t
 {
@@ -18,7 +19,7 @@ struct ModelRenderInfo_t
 {
 	Vector origin;
 	Angle angles;
-	void* pRenderable;
+	IClientRenderable* pRenderable;
 	const model_t* pModel;
 	const matrix3x4_t* pModelToWorld;
 	const matrix3x4_t* pLightingOffset;

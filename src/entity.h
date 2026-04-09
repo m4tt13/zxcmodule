@@ -9,8 +9,11 @@
 #include "varmap.h"
 #include "cliententitylist.h"
 
+class IClientNetworkable;
+class IClientRenderable;
 class CBaseHandle;
 class CBaseAnimating;
+class CBaseEntity;
 class CBasePlayerAnimState;
 class CUserCmd;
 class matrix3x4_t;
@@ -26,7 +29,12 @@ public:
 
 class IClientUnknown : public IHandleEntity {
 public:
-
+	virtual void*				GetCollideable() = 0;
+	virtual IClientNetworkable*	GetClientNetworkable() = 0;
+	virtual IClientRenderable*	GetClientRenderable() = 0;
+	virtual void*				GetIClientEntity() = 0;
+	virtual CBaseEntity*		GetBaseEntity() = 0;
+	virtual void*				GetClientThinkable() = 0;
 };
 
 struct ShouldTransmitState_t;  struct DataUpdateType_t; class bf_read;
@@ -47,6 +55,12 @@ public:
 	virtual void				ReceiveMessage(int classID, bf_read& msg) = 0;
 	virtual void*				GetDataTableBasePtr() = 0;
 	virtual void				SetDestroyedOnRecreateEntities(void) = 0;
+};
+
+class IClientRenderable
+{
+public:
+	virtual IClientUnknown*		GetIClientUnknown() = 0;
 };
 
 class CBaseEntity {

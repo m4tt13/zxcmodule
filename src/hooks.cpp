@@ -45,9 +45,6 @@ namespace detours {
 	PreCreateMoveFn preCreateMoveOriginal = nullptr;
 
 	bool __fastcall ClientModeCreateMoveHookFunc(ClientModeShared* self, float flInputSampleTime, CUserCmd* cmd) {
-		if (!cmd->command_number)
-			return preCreateMoveOriginal(self, flInputSampleTime, cmd);
-
 		if (luaInit) {
 			auto* lua = interfaces::clientLua;
 
@@ -183,31 +180,27 @@ namespace detours {
 		dmeContext.pInfo = pInfo;
 		dmeContext.pCustomBoneToWorld = pCustomBoneToWorld;
 
-		if (pInfo->entity_index) {
-			if (luaInit) {
-				auto* lua = interfaces::clientLua;
+		if (luaInit) {
+			auto* lua = interfaces::clientLua;
 
-				if (LuaHelpers::PushHookRun(lua, "PreDrawModelExecute" ) != 0) {
-					lua->PushNumber(pInfo->entity_index);
-					lua->PushNumber(pInfo->flags);
+			if (LuaHelpers::PushHookRun(lua, "PreDrawModelExecute" ) != 0) {
+				pInfo->pRenderable->GetIClientUnknown()->GetBaseEntity()->PushEntity();
+				lua->PushNumber(pInfo->flags);
 
-					LuaHelpers::CallHookRun(lua, 2, 0);
-				}
+				LuaHelpers::CallHookRun(lua, 2, 0);
 			}
 		}
 
 		DrawModelExecuteOriginal(self, state, pInfo, pCustomBoneToWorld);
 
-		if (pInfo->entity_index) {
-			if (luaInit) {
-				auto* lua = interfaces::clientLua;
+		if (luaInit) {
+			auto* lua = interfaces::clientLua;
 
-				if (LuaHelpers::PushHookRun(lua, "PostDrawModelExecute" ) != 0) {
-					lua->PushNumber(pInfo->entity_index);
-					lua->PushNumber(pInfo->flags);
+			if (LuaHelpers::PushHookRun(lua, "PostDrawModelExecute" ) != 0) {
+				pInfo->pRenderable->GetIClientUnknown()->GetBaseEntity()->PushEntity();
+				lua->PushNumber(pInfo->flags);
 
-					LuaHelpers::CallHookRun(lua, 2, 0);
-				}
+				LuaHelpers::CallHookRun(lua, 2, 0);
 			}
 		}
 

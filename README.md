@@ -22,8 +22,8 @@ PreFrameStageNotify( number stage )
 PostFrameStageNotify( number stage )  
 PreRunCommand( Player ply, CUserCmd cmd )  
 PostRunCommand( Player ply, CUserCmd cmd )  
-PreDrawModelExecute( number ent_index, number flags )  
-PostDrawModelExecute( number ent_index, number flags )  
+PreDrawModelExecute( Entity ent, number flags )  
+PostDrawModelExecute( Entity ent, number flags )  
 SendNetMsg( string msgname ) -> boolean  
 ShouldUpdateAnimation( Player ply ) -> boolean, number  
 OnMove() -> boolean  
@@ -72,10 +72,12 @@ SpoofedConVarSetNumber( string name, number num ) -> boolean
 SetCommandNumber( CUserCmd cmd, number num )  
 SetCommandTick( CUserCmd cmd, number tick )  
 SetTyping( CUserCmd cmd, boolean typing )  
-SetContextVector( CUserCmd cmd, Vector normal, boolean menu )  
+EnableContextMenu( CUserCmd cmd, boolean enable )  
+SetContextVector( CUserCmd cmd, Vector normal )  
 GetRandomSeed( CUserCmd cmd ) -> number  
 SetRandomSeed( CUserCmd cmd, number seed )  
-PredictSpread( CUserCmd cmd, Angle ang, Vector vec ) -> Vector  
+MD5PseudoRandom( number seed ) -> number  
+PredictSpread( CUserCmd cmd, Vector spread ) -> Vector  
 StartPrediction( CUserCmd cmd )  
 FinishPrediction()  
 RunPrediction()  
@@ -99,7 +101,7 @@ GetNetworkedVarBool( Entity ent, string table, string var ) -> boolean
 GetNetworkedVarString( Entity ent, string table, string var ) -> string  
 GetNetworkedVarVector( Entity ent, string table, string var ) -> Vector  
 GetNetworkedVarAngle( Entity ent, string table, string var ) -> Angle  
-GetNetworkedVarEnt( Entity ent, string table, string var ) -> Entity  
+GetNetworkedVarEntity( Entity ent, string table, string var ) -> Entity  
 GetTickBase( Player ply ) -> number  
 SetTickBase( Player ply, number tickbase )  
 UpdateAnimations( Player ply, number yaw, number pitch )  

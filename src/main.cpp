@@ -307,13 +307,21 @@ LUA_FUNCTION(SetTyping) {
 	return 0;
 }
 
+LUA_FUNCTION(EnableContextMenu) {
+	LUA->CheckType(1, Type::UserCmd);
+	LUA->CheckType(2, Type::Bool);
+
+	CUserCmd* cmd = LUA->GetUserType<CUserCmd>(1, Type::UserCmd);
+	cmd->context_menu = LUA->GetBool(2);
+
+	return 0;
+}
+
 LUA_FUNCTION(SetContextVector) {
 	LUA->CheckType(1, Type::UserCmd);
 	LUA->CheckType(2, Type::Vector);
-	LUA->CheckType(3, Type::Bool);
 
 	CUserCmd* cmd = LUA->GetUserType<CUserCmd>(1, Type::UserCmd);
-	cmd->context_menu = LUA->GetBool(3);
 	cmd->context_normal = LUA->GetVector(2);
 
 	return 0;
@@ -323,17 +331,7 @@ LUA_FUNCTION(GetRandomSeed) {
 	LUA->CheckType(1, Type::UserCmd);
 
 	CUserCmd* cmd = LUA->GetUserType<CUserCmd>(1, Type::UserCmd);
-
-	uint32_t seed;
-	{
-		Chocobo1::MD5 md5;
-		md5.addData(&cmd->command_number, sizeof(cmd->command_number));
-		md5.finalize();
-
-		seed = *reinterpret_cast<uint32_t*>(md5.toArray().data() + 6);
-	}
-
-	LUA->PushNumber(seed & 0xFF);
+	LUA->PushNumber(cmd->random_seed);
 
 	return 1;
 }
@@ -343,47 +341,35 @@ LUA_FUNCTION(SetRandomSeed) {
 	LUA->CheckNumber(2);
 
 	CUserCmd* cmd = LUA->GetUserType<CUserCmd>(1, Type::UserCmd);
-	int nSeed = LUA->GetNumber(2);
-
-	uint32_t seed;
-	{
-		Chocobo1::MD5 md5;
-		md5.addData(&nSeed, sizeof(nSeed));
-		md5.finalize();
-
-		seed = *reinterpret_cast<uint32_t*>(md5.toArray().data() + 6);
-	}
-
-	for (int i = cmd->command_number;; i++)
-	{
-		uint32_t uSeed;
-		{
-			Chocobo1::MD5 md5;
-			md5.addData(&i, sizeof(i));
-			md5.finalize();
-
-			uSeed = *reinterpret_cast<uint32_t*>(md5.toArray().data() + 6);
-		}
-
-		if ((uSeed & 0xFF) != (seed & 0xFF))
-			continue;
-
-		cmd->command_number = i;
-		cmd->random_seed = uSeed & 0x7FFFFFFF;
-		break;
-	}
+	cmd->random_seed = LUA->GetNumber(2);
 
 	return 0;
 }
 
+LUA_FUNCTION(MD5PseudoRandom) {
+	LUA->CheckNumber(1);
+
+	int seed = LUA->GetNumber(1);
+
+	uint32_t checksum;
+	{
+		Chocobo1::MD5 md5;
+		md5.addData(&seed, sizeof(seed));
+		md5.finalize();
+
+		checksum = *reinterpret_cast<uint32_t*>(md5.toArray().data() + 6);
+	}
+	LUA->PushNumber(checksum);
+
+	return 1;
+}
+
 LUA_FUNCTION(PredictSpread) {
 	LUA->CheckType(1, Type::UserCmd);
-	LUA->CheckType(2, Type::Angle);
-	LUA->CheckType(3, Type::Vector);
+	LUA->CheckType(2, Type::Vector);
 
 	CUserCmd* cmd = LUA->GetUserType<CUserCmd>(1, Type::UserCmd);
-	Angle angle = LUA->GetAngle(2);
-	Vector vector = LUA->GetVector(3);
+	Vector spread = LUA->GetVector(2);
 
 	uint32_t seed;
 	{
@@ -432,7 +418,7 @@ LUA_FUNCTION(PredictSpread) {
 		z = x*x + y*y;
 	} while (z > 1);
 
-	Vector spreadDir = Vector(1.f, -vector.x * x, vector.y * y);
+	Vector spreadDir = Vector(1.f, -spread.x * x, spread.y * y);
 
 	LUA->PushVector(spreadDir);
 
@@ -1045,7 +1031,7 @@ LUA_FUNCTION(GetNetworkedVarAngle) {
 	return 1;
 }
 
-LUA_FUNCTION(GetNetworkedVarEnt) {
+LUA_FUNCTION(GetNetworkedVarEntity) {
 	GET_ENTITY(1);
 	LUA->CheckString(2);
 	LUA->CheckString(3);
@@ -1260,9 +1246,11 @@ GMOD_MODULE_OPEN() {
 		PushApiFunction("SetCommandNumber", SetCommandNumber);
 		PushApiFunction("SetCommandTick", SetCommandTick);
 		PushApiFunction("SetTyping", SetTyping);
+		PushApiFunction("EnableContextMenu", EnableContextMenu);
 		PushApiFunction("SetContextVector", SetContextVector);
 		PushApiFunction("GetRandomSeed", GetRandomSeed);
 		PushApiFunction("SetRandomSeed", SetRandomSeed);
+		PushApiFunction("MD5PseudoRandom", MD5PseudoRandom);
 		PushApiFunction("PredictSpread", PredictSpread);
 
 		PushApiFunction("StartPrediction", StartPrediction);
@@ -1295,7 +1283,7 @@ GMOD_MODULE_OPEN() {
 		PushApiFunction("GetNetworkedVarString", GetNetworkedVarString);
 		PushApiFunction("GetNetworkedVarVector", GetNetworkedVarVector);
 		PushApiFunction("GetNetworkedVarAngle", GetNetworkedVarAngle);
-		PushApiFunction("GetNetworkedVarEnt", GetNetworkedVarEnt);
+		PushApiFunction("GetNetworkedVarEntity", GetNetworkedVarEntity);
 		PushApiFunction("GetTickBase", GetTickBase);
 		PushApiFunction("SetTickBase", SetTickBase);
 		PushApiFunction("UpdateAnimations", UpdateAnimations);
