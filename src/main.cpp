@@ -346,6 +346,36 @@ LUA_FUNCTION(SetRandomSeed) {
 	return 0;
 }
 
+LUA_FUNCTION(FindCommandNumber) {
+	LUA->CheckType(1, Type::UserCmd);
+	LUA->CheckNumber(2);
+
+	CUserCmd* cmd = LUA->GetUserType<CUserCmd>(1, Type::UserCmd);
+	int seed = LUA->GetNumber(2);
+	int cmdNum = cmd->command_number;
+
+	while (true)
+	{
+		uint32_t uSeed;
+		{
+			Chocobo1::MD5 md5;
+			md5.addData(&cmdNum, sizeof(cmdNum));
+			md5.finalize();
+
+			uSeed = *reinterpret_cast<uint32_t*>(md5.toArray().data() + 6);
+		}
+
+		if ((uSeed & 255) == (seed & 255))
+			break;
+
+		cmdNum++;
+	}
+
+	LUA->PushNumber(cmdNum);
+
+	return 1;
+}
+
 LUA_FUNCTION(MD5PseudoRandom) {
 	LUA->CheckNumber(1);
 
@@ -1250,6 +1280,7 @@ GMOD_MODULE_OPEN() {
 		PushApiFunction("SetContextVector", SetContextVector);
 		PushApiFunction("GetRandomSeed", GetRandomSeed);
 		PushApiFunction("SetRandomSeed", SetRandomSeed);
+		PushApiFunction("FindCommandNumber", FindCommandNumber);
 		PushApiFunction("MD5PseudoRandom", MD5PseudoRandom);
 		PushApiFunction("PredictSpread", PredictSpread);
 
