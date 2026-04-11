@@ -353,10 +353,10 @@ LUA_FUNCTION(FindCommandNumber) {
 	CUserCmd* cmd = LUA->GetUserType<CUserCmd>(1, Type::UserCmd);
 	int seed = LUA->GetNumber(2);
 	int cmdNum = cmd->command_number;
+	uint32_t uSeed = 0;
 
 	while (true)
 	{
-		uint32_t uSeed;
 		{
 			Chocobo1::MD5 md5;
 			md5.addData(&cmdNum, sizeof(cmdNum));
@@ -372,8 +372,9 @@ LUA_FUNCTION(FindCommandNumber) {
 	}
 
 	LUA->PushNumber(cmdNum);
+	LUA->PushNumber(uSeed);
 
-	return 1;
+	return 2;
 }
 
 LUA_FUNCTION(MD5PseudoRandom) {

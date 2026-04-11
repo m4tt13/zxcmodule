@@ -76,7 +76,7 @@ EnableContextMenu( CUserCmd cmd, boolean enable )
 SetContextVector( CUserCmd cmd, Vector normal )  
 GetRandomSeed( CUserCmd cmd ) -> number  
 SetRandomSeed( CUserCmd cmd, number seed )  
-FindCommandNumber( CUserCmd cmd, number seed ) -> number  
+FindCommandNumber( CUserCmd cmd, number seed ) -> number, number  
 MD5PseudoRandom( number seed ) -> number  
 PredictSpread( CUserCmd cmd, Vector spread ) -> Vector  
 StartPrediction( CUserCmd cmd )  
