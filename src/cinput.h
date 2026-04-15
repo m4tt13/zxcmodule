@@ -13,7 +13,7 @@ public:
 	}
 
 	CUserCmd* GetCommand(int seq) {
-		CUserCmd* cmd = reinterpret_cast<CUserCmd*>(reinterpret_cast<std::uintptr_t>(GetCommands()) + 324 * (seq % MULTIPLAYER_BACKUP));
+		CUserCmd* cmd = reinterpret_cast<CUserCmd*>(reinterpret_cast<std::uintptr_t>(GetCommands()) + 316 * (seq % MULTIPLAYER_BACKUP));
 		return cmd;
 	}
 
@@ -22,7 +22,7 @@ public:
 	}
 
 	CVerifiedUserCmd* GetVerifiedCommand(int seq) {
-		CVerifiedUserCmd* verifiedCmd = reinterpret_cast<CVerifiedUserCmd*>(reinterpret_cast<std::uintptr_t>(GetVerifiedCommands()) + 328 * (seq % MULTIPLAYER_BACKUP));
+		CVerifiedUserCmd* verifiedCmd = reinterpret_cast<CVerifiedUserCmd*>(reinterpret_cast<std::uintptr_t>(GetVerifiedCommands()) + 320 * (seq % MULTIPLAYER_BACKUP));
 		return verifiedCmd;
 	}
 };

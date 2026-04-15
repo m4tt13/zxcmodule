@@ -108,7 +108,7 @@ namespace interfaces {
 		input = *reinterpret_cast<CInput**>(getAbsAddr(vmt::get<std::uintptr_t>(client, 21) + 0x3F));
 		globalVars = *reinterpret_cast<CGlobalVars**>(getAbsAddr(vmt::get<std::uintptr_t>(client, 0) + 0x94));
 		clientMode = *reinterpret_cast<ClientModeShared**>(getAbsAddr(vmt::get<std::uintptr_t>(client, 10)));
-		view = *reinterpret_cast<CViewRender**>(getAbsAddr(vmt::get<std::uintptr_t>(client, 2) + 0xC4));
+		view = *reinterpret_cast<CViewRender**>(getAbsAddr(vmt::get<std::uintptr_t>(client, 2) + 0xB2));
 
 		moveHelper = *reinterpret_cast<IMoveHelper**>(getAbsAddr(findPattern("client.dll", "48 8B 0D ?? ?? ?? ?? 48 8B 01 FF 50 ?? 48 8B 03 48 8B CB FF 90 ?? ?? ?? ?? 48 8B 4B")));
 		clientState = reinterpret_cast<CClientState*>(getAbsAddr(findPattern("engine.dll", "F3 0F 58 05 ?? ?? ?? ?? FF C8") + 0x1));

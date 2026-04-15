@@ -77,11 +77,8 @@ public:
 	//NETVAR_(Vector, DT_BaseEntity, m_vecAbsVelocity[0], GetAbsVelocity);
 	NETVAR_(Vector, DT_BaseEntity, m_vecVelocity[0], GetVelocity);
 	NETVAR_(Vector, DT_BaseEntity, m_vecOrigin, GetAbsOrigin);
-	OFFSETVAR(char, m_MoveType, 0x1F4);
-
-	OFFSETVAR(VarMapping_t, GetVarMapping, 40);
-
-	OFFSETVAR(int, m_iEFlags, 0x1F0); 
+	OFFSETVAR(char, m_MoveType, 0x1D4);
+	OFFSETVAR(int, m_iEFlags, 0x1D0); 
 	NETVAR(int, DT_BaseEntity, m_fEffects);
 };
 
@@ -93,9 +90,9 @@ public:
 class CBaseAnimating : public CBaseEntity {
 public:
 	VPROXY(SetupBones, 16, bool, (matrix3x4_t* pBoneToWorldOut, int nMaxBones, int boneMask), pBoneToWorldOut, nMaxBones, boneMask);
-	VPROXY(UpdateClientsideAnimation, 237, void, (void)); // wrong index ( 297 )
+	VPROXY(UpdateClientsideAnimation, 235, void, (void)); // wrong index ( 297 )
 
-	OFFSETVAR(void*, m_hitboxBoneCacheHandle, 0x1AA0);
+	OFFSETVAR(void*, m_hitboxBoneCacheHandle, 0x1A48);
 	NETVAR(bool, DT_BaseAnimating, m_bClientSideAnimation);
 	NETVAR(float, DT_BaseAnimating, m_flModelScale);
 };
@@ -111,8 +108,8 @@ public:
 	bool IsInNoclip() { return GetMoveType() == MoveType::NOCLIP; }
 
 	// CPrediction__RunCommand 2 line
-	OFFSETVAR(CUserCmd*, GetCurrentCommand, 0x2CA0); 
-	OFFSETVAR(CBasePlayerAnimState*, GetAnimState, 0x3668);
+	OFFSETVAR(CUserCmd*, GetCurrentCommand, 0x2BF8); 
+	OFFSETVAR(CBasePlayerAnimState*, GetAnimState, 0x3590);
 
 	NETVAR(char, DT_GMOD_Player, m_nWaterLevel);
 

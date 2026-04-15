@@ -107,19 +107,19 @@ public:
 	float sidemove;
 	float upmove;
 	int buttons;
-	unsigned char impulse;
 	int weaponselect;
 	int weaponsubtype;
 	int random_seed;
 	short mousedx;
 	short mousedy;
 	bool hasbeenpredicted;
-	char pad_0001[5];
+	unsigned char impulse;
+	bool istyping;
+	char pad_0001[6];
 	char scroll_wheel_speed;
 	bool context_menu;
 	Vector context_normal;
-	bool istyping;
-	char pad_0002[244];
+	char pad_0002[240];
 };
 
 class CVerifiedUserCmd {

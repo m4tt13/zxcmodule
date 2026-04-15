@@ -486,7 +486,7 @@ namespace detours {
 		localPlayer = reinterpret_cast<CBasePlayer*>(interfaces::entityList->GetClientEntity(interfaces::engineClient->GetLocalPlayer()));
 
 		void* InterpolateT = vmt::get<void*>(localPlayer, 100);
-		void* UpdateClientAnimsT = vmt::get<void*>(localPlayer, 237);
+		void* UpdateClientAnimsT = vmt::get<void*>(localPlayer, 235);
 
 		MH_CreateHook(InterpolateT, (LPVOID)&InterpolateHookFunc, (LPVOID*)&InterpolateOriginal);
 		MH_CreateHook(UpdateClientAnimsT, (LPVOID)&UpdateClientsideAnimationHookFunc, (LPVOID*)&UpdateClientsideAnimationOriginal);
