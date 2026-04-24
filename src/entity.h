@@ -78,6 +78,9 @@ public:
 	NETVAR_(Vector, DT_BaseEntity, m_vecVelocity[0], GetVelocity);
 	NETVAR_(Vector, DT_BaseEntity, m_vecOrigin, GetAbsOrigin);
 	OFFSETVAR(char, m_MoveType, 0x1D4);
+
+	OFFSETVAR(VarMapping_t, GetVarMapping, 40);
+
 	OFFSETVAR(int, m_iEFlags, 0x1D0); 
 	NETVAR(int, DT_BaseEntity, m_fEffects);
 };

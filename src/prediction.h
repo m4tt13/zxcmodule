@@ -22,7 +22,7 @@ private:
 	float _oldFrameTime;
 
 	int* _predictionRandomSeed;
-	CBasePlayer** _predictionPlayer;
+	CBaseHandle* _predictionPlayer;
 };
 
 extern Prediction g_prediction;

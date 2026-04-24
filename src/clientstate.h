@@ -2,6 +2,8 @@
 
 class CClientState {
 public:
+	char		pad_0001[133992];
+
 	float		m_flLastServerTickTime;	// the timestamp of last message
 	bool		insimulation;
 

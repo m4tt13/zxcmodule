@@ -13,7 +13,7 @@
 
 Prediction::Prediction() : _moveData {0}, _oldCurTime(0.f), _oldFrameTime(0.f), _predictionRandomSeed(nullptr), _predictionPlayer(nullptr) {
 	_predictionRandomSeed = reinterpret_cast<int*>(getAbsAddr(findPattern("client.dll", "0F B6 1D ?? ?? ?? ?? 0F 29 74 24")));
-	_predictionPlayer = reinterpret_cast<CBasePlayer**>(getAbsAddr(findPattern("client.dll", "48 89 3D ?? ?? ?? ?? 66 0F 6E 87")));
+	_predictionPlayer = reinterpret_cast<CBaseHandle*>(getAbsAddr(findPattern("client.dll", "44 89 15 ? ? ? ? 66 0F 6E 87")));
 }
 
 void Prediction::Start(CUserCmd* cmd) {
@@ -21,7 +21,7 @@ void Prediction::Start(CUserCmd* cmd) {
 
 	localPlayer->GetCurrentCommand() = cmd;
 	*_predictionRandomSeed = cmd->random_seed;
-	*_predictionPlayer = localPlayer;
+	*_predictionPlayer = localPlayer->GetClientUnknown()->GetRefEHandle();
 
 	_oldCurTime = interfaces::globalVars->curtime;
 	_oldFrameTime = interfaces::globalVars->frametime;
@@ -58,7 +58,7 @@ void Prediction::Finish() {
 
 	localPlayer->GetCurrentCommand() = nullptr;
 	*_predictionRandomSeed = -1;
-	*_predictionPlayer = nullptr;
+	_predictionPlayer->m_Index = INVALID_EHANDLE_INDEX;
 }
 
 Prediction g_prediction;

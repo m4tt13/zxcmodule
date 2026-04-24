@@ -111,6 +111,6 @@ namespace interfaces {
 		view = *reinterpret_cast<CViewRender**>(getAbsAddr(vmt::get<std::uintptr_t>(client, 2) + 0xB2));
 
 		moveHelper = *reinterpret_cast<IMoveHelper**>(getAbsAddr(findPattern("client.dll", "48 8B 0D ?? ?? ?? ?? 48 8B 01 FF 50 ?? 48 8B 03 48 8B CB FF 90 ?? ?? ?? ?? 48 8B 4B")));
-		clientState = reinterpret_cast<CClientState*>(getAbsAddr(findPattern("engine.dll", "F3 0F 58 05 ?? ?? ?? ?? FF C8") + 0x1));
+		clientState = reinterpret_cast<CClientState*>(getAbsAddr(findPattern("engine.dll", "48 8D 0D ? ? ? ? C6 05 ? ? ? ? ? E8 ? ? ? ? E8")));
 	}
 }
