@@ -40,7 +40,7 @@ public:
 	VPROXY(ClientCmd_Unrestricted, 106, void, (char const* szCmdString), szCmdString);
 	VPROXY(SetRestrictServerCommands, 107, void, (bool bRestrict), bRestrict);
 	VPROXY(SetRestrictClientCommands, 108, void, (bool bRestrict), bRestrict);
-	VPROXY(GMOD_RawClientCmd_Unrestricted, 140, void, (char const* szCmdString), szCmdString);
+	VPROXY(GMOD_RawClientCmd_Unrestricted, 139, void, (char const* szCmdString), szCmdString);
 	 
 	INetChannel* GetNetChannel() { return reinterpret_cast<INetChannel*>(GetNetChannelInfo()); }
 }; 

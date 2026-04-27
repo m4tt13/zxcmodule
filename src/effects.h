@@ -22,7 +22,7 @@ struct CEffectData {
 
 };
 
-using ClientEffectCallback = void(__fastcall*)(const CEffectData& data);
+using ClientEffectCallback = void(__fastcall*)(CEffectData& data);
 class CClientEffectRegistration {
 public:
 	const char* m_pEffectName;

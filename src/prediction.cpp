@@ -11,23 +11,21 @@
 #include "patternscan.h"
 #include "util.h"
 
-Prediction::Prediction() : _moveData {0}, _oldCurTime(0.f), _oldFrameTime(0.f), _predictionRandomSeed(nullptr), _predictionPlayer(nullptr) {
-	_predictionRandomSeed = reinterpret_cast<int*>(getAbsAddr(findPattern("client.dll", "0F B6 1D ?? ?? ?? ?? 0F 29 74 24")));
-	_predictionPlayer = reinterpret_cast<CBaseHandle*>(getAbsAddr(findPattern("client.dll", "44 89 15 ? ? ? ? 66 0F 6E 87")));
+Prediction::Prediction() : _moveData {0}, _oldCurTime(0.f), _oldFrameTime(0.f) {
 }
 
 void Prediction::Start(CUserCmd* cmd) {
 	CBasePlayer* localPlayer = reinterpret_cast<CBasePlayer*>(interfaces::entityList->GetClientEntity(interfaces::engineClient->GetLocalPlayer()));
 
 	localPlayer->GetCurrentCommand() = cmd;
-	*_predictionRandomSeed = cmd->random_seed;
-	*_predictionPlayer = localPlayer->GetClientUnknown()->GetRefEHandle();
+	localPlayer->SetPredictionRandomSeed( cmd->random_seed );
+	localPlayer->SetPredictionPlayer( localPlayer->GetClientUnknown()->GetRefEHandle() );
 
 	_oldCurTime = interfaces::globalVars->curtime;
 	_oldFrameTime = interfaces::globalVars->frametime;
 
 	interfaces::globalVars->curtime = localPlayer->m_nTickBase() * interfaces::globalVars->interval_per_tick;
-	interfaces::globalVars->frametime = interfaces::globalVars->interval_per_tick;
+	interfaces::globalVars->frametime = interfaces::prediction->GetEnginePaused() ? 0.0f : interfaces::globalVars->interval_per_tick;
 
 	bool OldIsFirstTimePredicted = interfaces::prediction->GetIsFirstTimePredicted();
 	bool OldInPrediction = interfaces::prediction->GetInPrediction();
@@ -57,8 +55,8 @@ void Prediction::Finish() {
 	interfaces::globalVars->frametime = _oldFrameTime;
 
 	localPlayer->GetCurrentCommand() = nullptr;
-	*_predictionRandomSeed = -1;
-	_predictionPlayer->m_Index = INVALID_EHANDLE_INDEX;
+	localPlayer->SetPredictionRandomSeed( -1 );
+	localPlayer->SetPredictionPlayer( INVALID_EHANDLE_INDEX );
 }
 
 Prediction g_prediction;

@@ -38,4 +38,5 @@ public:
 
 	OFFSETVAR(bool, GetInPrediction, 0x0C);
 	OFFSETVAR(bool, GetIsFirstTimePredicted, 0x0D);
+	OFFSETVAR(bool, GetEnginePaused, 0x0F);
 };

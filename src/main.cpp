@@ -496,66 +496,13 @@ LUA_FUNCTION(SimulateTick) {
 }
 
 LUA_FUNCTION(GetSimulationData) {
-	LUA->CreateTable();
-
-	const auto& moveData = g_simulation.GetMoveData();
-
-	LUA->PushAngle(moveData.m_vecViewAngles);
-	LUA->SetField(-2, "m_vecViewAngles");
-
-	LUA->PushVector(moveData.m_vecVelocity);
-	LUA->SetField(-2, "m_vecVelocity");
-
-	LUA->PushAngle(moveData.m_vecAngles);
-	LUA->SetField(-2, "m_vecAngles");
-
-	LUA->PushVector(moveData.m_vecAbsOrigin);
-	LUA->SetField(-2, "m_vecAbsOrigin");
+	LUA->PushUserType(&g_simulation.GetMoveData(), Type::MoveData);
 
 	return 1;
 }
 
 LUA_FUNCTION(FinishSimulation) {
 	g_simulation.Finish();
-
-	return 0;
-}
-
-LUA_FUNCTION(EditSimulationData) {
-	LUA->CheckType(1, Type::Table);
-
-	auto fieldExists = [&](const char* name) -> bool {
-		LUA->GetField(1, name);
-		bool isNil = LUA->IsType(-1, Type::Nil);
-		LUA->Pop();
-		return !isNil;
-		};
-
-	auto& moveData = g_simulation.GetMoveData();
-	if (fieldExists("m_nButtons")) {
-		LUA->GetField(1, "m_nButtons");
-		moveData.m_nButtons = LUA->GetNumber();
-	}
-
-	if (fieldExists("m_nOldButtons")) {
-		LUA->GetField(1, "m_nOldButtons");
-		moveData.m_nOldButtons = LUA->GetNumber();
-	}
-
-	if (fieldExists("m_flForwardMove")) {
-		LUA->GetField(1, "m_flForwardMove");
-		moveData.m_flForwardMove = LUA->GetNumber();
-	}
-
-	if (fieldExists("m_flSideMove")) {
-		LUA->GetField(1, "m_flSideMove");
-		moveData.m_flSideMove = LUA->GetNumber();
-	}
-
-	if (fieldExists("m_vecViewAngles")) {
-		LUA->GetField(1, "m_vecViewAngles");
-		moveData.m_vecViewAngles = *LUA->GetUserType<Angle>(-1, Type::Angle);
-	}
 
 	return 0;
 }
@@ -1293,7 +1240,6 @@ GMOD_MODULE_OPEN() {
 		PushApiFunction("SimulateTick", SimulateTick);
 		PushApiFunction("GetSimulationData", GetSimulationData);
 		PushApiFunction("FinishSimulation", FinishSimulation);
-		PushApiFunction("EditSimulationData", EditSimulationData);
 
 		PushApiFunction("GetBSendPacket", GetBSendPacket);
 		PushApiFunction("SetBSendPacket", SetBSendPacket);

@@ -79,6 +79,7 @@
     <ClInclude Include="src\netvars.h" />
     <ClInclude Include="src\patternscan.h" />
     <ClInclude Include="src\prediction.h" />
+    <ClInclude Include="src\predictioncopy.h" />
     <ClInclude Include="src\recv.h" />
     <ClInclude Include="src\simulation.h" />
     <ClInclude Include="src\spoofedconvar.h" />
@@ -96,6 +97,7 @@
     <ClCompile Include="3rd\minhook\hook.c" />
     <ClCompile Include="3rd\minhook\trampoline.c" />
     <ClCompile Include="src\bitbuf.cpp" />
+    <ClCompile Include="src\entity.cpp" />
     <ClCompile Include="src\globals.cpp" />
     <ClCompile Include="src\hooks.cpp" />
     <ClCompile Include="src\interfaces.cpp" />
@@ -103,6 +105,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\netvars.cpp" />
     <ClCompile Include="src\prediction.cpp" />
+    <ClCompile Include="src\predictioncopy.cpp" />
     <ClCompile Include="src\simulation.cpp" />
   </ItemGroup>
   <ItemGroup>

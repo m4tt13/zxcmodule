@@ -8,10 +8,10 @@
 #include "defines.h"
 #include "varmap.h"
 #include "cliententitylist.h"
+#include "basehandle.h"
 
 class IClientNetworkable;
 class IClientRenderable;
-class CBaseHandle;
 class CBaseAnimating;
 class CBaseEntity;
 class CBasePlayerAnimState;
@@ -19,6 +19,7 @@ class CUserCmd;
 class matrix3x4_t;
 class Vector;
 class Angle;
+struct datamap_t;
 
 class IHandleEntity { 
 public:
@@ -68,6 +69,7 @@ public:
 	IClientUnknown* GetClientUnknown() { return reinterpret_cast<IClientUnknown*>(this); }
 	IClientNetworkable* GetClientNetworkable() { return vmt::call<IClientNetworkable*>(this, 4); }
 
+	VPROXY(GetPredDescMap, 15, datamap_t*, (void));
 	VPROXY(GetBaseAnimating, 39, CBaseAnimating*, (void));
 	VPROXY(IsPlayer, 131, bool, (void));
 	VPROXY(PushEntity, 173, void, (void));
@@ -83,6 +85,13 @@ public:
 
 	OFFSETVAR(int, m_iEFlags, 0x1D0); 
 	NETVAR(int, DT_BaseEntity, m_fEffects);
+
+	OFFSETVAR(unsigned char*, m_pOriginalData, 0x6F0);
+
+	void AllocateIntermediateData( void );
+
+	static void	SetPredictionRandomSeed( int seed );
+	static void	SetPredictionPlayer( const CBaseHandle& hndl );
 };
 
 class CBaseWeapon : public CBaseEntity {
@@ -107,6 +116,7 @@ public:
 
 	bool HasFlag(EntityFlags flag) { return m_fFlags() & static_cast<int>(flag); }
 	bool IsOnGround() { return HasFlag(EntityFlags::ONGROUND); }
+	bool IsDucking() { return HasFlag(EntityFlags::DUCKING); }
 	bool IsInWater() { return GetWaterLevel() != WaterLevel::NotInWater; }
 	bool IsInNoclip() { return GetMoveType() == MoveType::NOCLIP; }
 
@@ -124,15 +134,18 @@ public:
 
 	NETVAR(int, DT_BasePlayer, m_nTickBase);
 	NETVAR(int, DT_BasePlayer, m_fFlags);
-	NETVAR(int, DT_BasePlayer, m_hActiveWeapon);
+	NETVAR(CBaseHandle, DT_BasePlayer, m_hActiveWeapon);
 
 	NETVAR(bool, DT_BasePlayer, m_bDucked);
 	NETVAR(float, DT_BasePlayer, m_flDucktime);
 	NETVAR(float, DT_BasePlayer, m_flDuckJumpTime);
+	NETVAR(float, DT_BasePlayer, m_flJumpTime);
 	NETVAR(bool, DT_BasePlayer, m_bDucking);
 	NETVAR(bool, DT_BasePlayer, m_bInDuckJump);
 
-	NETVAR(CBaseEntity*, DT_BasePlayer, m_hGroundEntity);
+	NETVAR(float, DT_BasePlayer, m_flMaxspeed);
+
+	NETVAR(CBaseHandle, DT_BasePlayer, m_hGroundEntity);
 };
 
 inline CBasePlayer *ToBasePlayer( CBaseEntity *pEntity )

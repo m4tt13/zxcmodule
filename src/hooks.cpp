@@ -395,34 +395,12 @@ namespace detours {
 		}
 	}
 	
-	void __fastcall ImpactFunctionHookFunc(const CEffectData& data) {
+	void __fastcall ImpactFunctionHookFunc(CEffectData& data) {
 		if (luaInit) {
 			auto* lua = interfaces::clientLua;
 
 			if (LuaHelpers::PushHookRun(lua, "OnImpact" ) != 0) {
-				lua->CreateTable();
-				{
-					lua->PushVector(data.m_vOrigin);
-					lua->SetField(-2, "m_vOrigin");
-
-					lua->PushVector(data.m_vStart);
-					lua->SetField(-2, "m_vStart");
-
-					lua->PushVector(data.m_vNormal);
-					lua->SetField(-2, "m_vNormal");
-
-					lua->PushAngle(data.m_vAngles);
-					lua->SetField(-2, "m_vAngles");
-
-					lua->PushNumber(data.m_nEntIndex);
-					lua->SetField(-2, "m_nEntIndex");
-
-					lua->PushNumber(data.m_nDamageType);
-					lua->SetField(-2, "m_nDamageType");
-
-					lua->PushNumber(data.m_nHitBox);
-					lua->SetField(-2, "m_nHitBox");
-				}
+				lua->PushUserType(&data, Type::EffectData);
 
 				LuaHelpers::CallHookRun(lua, 1, 0);
 			}

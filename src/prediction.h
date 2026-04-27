@@ -20,9 +20,6 @@ private:
 
 	float _oldCurTime;
 	float _oldFrameTime;
-
-	int* _predictionRandomSeed;
-	CBaseHandle* _predictionPlayer;
 };
 
 extern Prediction g_prediction;

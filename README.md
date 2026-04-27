@@ -27,7 +27,7 @@ PostDrawModelExecute( Entity ent, number flags )
 SendNetMsg( string msgname ) -> boolean  
 ShouldUpdateAnimation( Player ply ) -> boolean, number  
 OnMove() -> boolean  
-OnImpact( table data )  
+OnImpact( CEffectData edata )  
 ### Functions
 ServerCmd( string command, boolean reliable )  
 ClientCmd( string command )  
@@ -84,9 +84,8 @@ FinishPrediction()
 RunPrediction()  
 StartSimulation( Player ply )  
 SimulateTick()  
-GetSimulationData() -> table  
+GetSimulationData() -> CMoveData  
 FinishSimulation()  
-EditSimulationData( table data )  
 GetBSendPacket() -> boolean  
 SetBSendPacket( boolean send )  
 SetInterpolation( boolean interp )  
