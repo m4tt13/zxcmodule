@@ -179,6 +179,13 @@ namespace detours {
 
 	void __fastcall DrawModelExecuteHookFunc(CModelRender* self, const DrawModelState_t* state, ModelRenderInfo_t* pInfo, matrix3x4_t* pCustomBoneToWorld) {
 
+		CBaseEntity* pEntity = pInfo->pRenderable->GetIClientUnknown()->GetBaseEntity();
+
+		if (!pEntity) {
+			DrawModelExecuteOriginal(self, state, pInfo, pCustomBoneToWorld);
+			return;
+		}
+
 		dmeContext.in_hook = true;
 		dmeContext.self = self;
 		dmeContext.state = state;
@@ -189,7 +196,7 @@ namespace detours {
 			auto* lua = interfaces::clientLua;
 
 			if (LuaHelpers::PushHookRun(lua, "PreDrawModelExecute" ) != 0) {
-				pInfo->pRenderable->GetIClientUnknown()->GetBaseEntity()->PushEntity();
+				pEntity->PushEntity();
 				lua->PushNumber(pInfo->flags);
 
 				LuaHelpers::CallHookRun(lua, 2, 0);
@@ -202,7 +209,7 @@ namespace detours {
 			auto* lua = interfaces::clientLua;
 
 			if (LuaHelpers::PushHookRun(lua, "PostDrawModelExecute" ) != 0) {
-				pInfo->pRenderable->GetIClientUnknown()->GetBaseEntity()->PushEntity();
+				pEntity->PushEntity();
 				lua->PushNumber(pInfo->flags);
 
 				LuaHelpers::CallHookRun(lua, 2, 0);
