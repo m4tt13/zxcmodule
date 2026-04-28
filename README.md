@@ -27,7 +27,7 @@ PostDrawModelExecute( Entity ent, number flags )
 SendNetMsg( string msgname ) -> boolean  
 ShouldUpdateAnimation( Player ply ) -> boolean, number  
 OnMove() -> boolean  
-OnImpact( CEffectData edata )  
+Effect_<name>( CEffectData edata ) -> boolean  
 ### Functions
 ServerCmd( string command, boolean reliable )  
 ClientCmd( string command )  

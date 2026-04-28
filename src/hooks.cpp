@@ -35,10 +35,15 @@ namespace detours {
 	auto SeqChangePattern = findPattern("client.dll", "48 85 D2 0F 84 ?? ?? ?? ?? 48 89 6C 24 ?? 48 89 74 24 ?? 48 89 7C 24");
 	auto CL_MovePattern = findPattern("engine.dll", "40 55 53 48 8D AC 24 ?? ?? ?? ?? B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 2B E0 0F 29 B4 24");
 
-	ClientEffectCallback impactFunctionOriginal = nullptr;
 	RecvVarProxyFn simTimeProxyFuncOriginal = nullptr;
 	RecvProp* simTimeRecvProp = nullptr;
 	CBasePlayer* localPlayer = nullptr;
+
+	struct effect_hook_t {
+		CClientEffectRegistration* reg;
+		ClientEffectCallback orig;
+	};
+	std::vector<effect_hook_t> effect_hooks;
 
 	// Pre CreateMove
 	using PreCreateMoveFn = bool(__fastcall*)(ClientModeShared* self, float flInputSampleTime, CUserCmd* cmd);
@@ -384,29 +389,59 @@ namespace detours {
 		interfaces::globalVars->frametime = OldFrameTime;
 	}
 
-	// Dispatch effect 
-	void hookEffect(ClientEffectCallback hookFunc, const char* effectName) {
-		static CClientEffectRegistration* s_pHead = *reinterpret_cast<CClientEffectRegistration**>(getAbsAddr(findPattern("client.dll", "48 8B 1D ?? ?? ?? ?? 48 85 DB 74 ?? 0F 1F 40 ?? 48 8B 0B")));
-		for (CClientEffectRegistration* pReg = s_pHead; pReg; pReg = pReg->m_pNext) {
-			if (pReg->m_pEffectName && strcmp(pReg->m_pEffectName, effectName) == 0) {
-				impactFunctionOriginal = pReg->m_pFunction;
-				pReg->m_pFunction = hookFunc;
-			}
-		}
-	}
-	
-	void __fastcall ImpactFunctionHookFunc(CEffectData& data) {
+	void __fastcall EffectFunctionHookFunc(CEffectData& data, const char* effectName, ClientEffectCallback originalFunc) {
+		bool dontcall = false;
 		if (luaInit) {
 			auto* lua = interfaces::clientLua;
 
-			if (LuaHelpers::PushHookRun(lua, "OnImpact" ) != 0) {
+			std::string hookName = "Effect_";
+			hookName += effectName;
+			if (LuaHelpers::PushHookRun(lua, hookName.c_str()) != 0) {
 				lua->PushUserType(&data, Type::EffectData);
 
-				LuaHelpers::CallHookRun(lua, 1, 0);
+				if (LuaHelpers::CallHookRun(lua, 1, 1))
+				{
+					if (lua->IsType(-1, Type::Bool))
+						dontcall = lua->GetBool(-1);
+
+					lua->Pop(1);
+				}
 			}
 		}
+		if (!dontcall)
+			originalFunc(data);
+	}
 
-		impactFunctionOriginal(data);
+	void* hookEffect(void* effectName, void* originalFunc, void* hookFunc) {
+		static const unsigned char trampoline_bytes[] = { 
+			0x48, 0xBA, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11,
+			0x49, 0xB8, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11,
+			0x48, 0xB8, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11,
+			0x48, 0xFF, 0xE0 };              
+		void* trampoline = VirtualAlloc(nullptr, sizeof(trampoline_bytes), MEM_COMMIT|MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+		memcpy(trampoline, trampoline_bytes, sizeof(trampoline_bytes));
+		*(void**)((uintptr_t)trampoline + 2) = effectName;
+		*(void**)((uintptr_t)trampoline + 12) = originalFunc;
+		*(void**)((uintptr_t)trampoline + 22) = hookFunc;
+		return trampoline;
+	}
+
+	// Dispatch effect 
+	void hookEffects() {
+		static CClientEffectRegistration* s_pHead = *reinterpret_cast<CClientEffectRegistration**>(getAbsAddr(findPattern("client.dll", "48 8B 1D ?? ?? ?? ?? 48 85 DB 74 ?? 0F 1F 40 ?? 48 8B 0B")));
+		for (CClientEffectRegistration* pReg = s_pHead; pReg; pReg = pReg->m_pNext) {
+			effect_hooks.push_back({pReg, pReg->m_pFunction});
+			pReg->m_pFunction = (ClientEffectCallback)hookEffect((void*)pReg->m_pEffectName, (void*)pReg->m_pFunction, (void*)&EffectFunctionHookFunc);
+		}
+	}
+
+	void unhookEffects() {
+		for (effect_hook_t h : effect_hooks) {
+			void* trampoline = h.reg->m_pFunction;
+			h.reg->m_pFunction = h.orig;
+			VirtualFree(trampoline, 0, MEM_RELEASE);
+		}
+		effect_hooks.clear();
 	}
 
 	void SimTimeProxyFunc(const CRecvProxyData* pData, void* pStruct, void* pOut)
@@ -446,7 +481,7 @@ namespace detours {
 		vmt::hook(interfaces::prediction, &RunCommandOriginal, (const void*)RunCommandHookFunc, 17);
 		vmt::hook(interfaces::modelRender, &DrawModelExecuteOriginal, (const void*)DrawModelExecuteHookFunc, 20);
 
-		hookEffect(ImpactFunctionHookFunc, "Impact");
+		hookEffects();
 		hookSimTime();
 
 		if (MH_Initialize() == MH_OK)
@@ -488,7 +523,7 @@ namespace detours {
 		vmt::hook(interfaces::prediction, &RunCommandDummy, RunCommandOriginal, 17);
 		vmt::hook(interfaces::modelRender, &DrawModelDummy, DrawModelExecuteOriginal, 20);
 
-		hookEffect(impactFunctionOriginal, "Impact");
+		unhookEffects();
 		simTimeRecvProp->m_ProxyFn = simTimeProxyFuncOriginal;
 
 		MH_DisableHook(MH_ALL_HOOKS);
