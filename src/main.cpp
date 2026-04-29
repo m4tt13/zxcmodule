@@ -353,7 +353,7 @@ LUA_FUNCTION(FindCommandNumber) {
 	CUserCmd* cmd = LUA->GetUserType<CUserCmd>(1, Type::UserCmd);
 	int seed = LUA->GetNumber(2);
 	int cmdNum = cmd->command_number;
-	uint32_t uSeed = 0;
+	uint32_t uSeed;
 
 	while (true)
 	{
@@ -1060,7 +1060,7 @@ LUA_FUNCTION(InvalidateBoneCache) {
 		void *pcache = Studio_GetBoneCache(Anim->m_hitboxBoneCacheHandle());
 
 		if (pcache)
-			*(float*)pcache = -1.0f;
+			*(double*)pcache = -1.0;
 	}
 
 	return 0;

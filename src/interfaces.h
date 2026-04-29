@@ -21,11 +21,13 @@ class CPrediction;
 class CLuaShared;
 class CCvar;
 class CModelRender;
+class IVModelInfo;
 class CViewRender;
 
 namespace interfaces {
 	extern IEngineClient*		engineClient;
 	extern CModelRender*		modelRender;
+	extern IVModelInfo*			modelInfo;
 	extern IClientEntityList*	entityList;
 	extern CHLClient*			client;
 	extern CInput*				input;

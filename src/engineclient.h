@@ -27,7 +27,7 @@ public:
 	VPROXY(ClientCmd, 7, void, (char const* szCmdString), szCmdString);
 	VPROXY(GetLocalPlayer, 12, int, (void));
 	VPROXY(Time, 14, double, (void));
-	VPROXY(GetLastTimeStamp, 15, float, (void));
+	VPROXY(GetLastTimeStamp, 15, double, (void));
 	VPROXY(GetViewAngles, 19, void, (Angle* va), va);
 	VPROXY(SetViewAngles, 20, void, (Angle* va), va);
 	VPROXY(IsBoxVisible, 31, bool, (Vector const& mins, Vector const& maxs), mins, maxs);

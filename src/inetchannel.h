@@ -147,7 +147,7 @@ public:
 	// number of choked packets
 	int			m_nChokedPackets;
 
-	uint8_t		pad_0001[9272];
+	uint8_t		pad_0001[9496];
 
 	// packets lost before getting last update (was global net_drop)
 	int			m_PacketDrop;

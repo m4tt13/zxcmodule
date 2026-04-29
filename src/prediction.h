@@ -18,7 +18,7 @@ public:
 private:
 	CMoveData _moveData;
 
-	float _oldCurTime;
+	double _oldCurTime;
 	float _oldFrameTime;
 };
 

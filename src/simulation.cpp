@@ -6,7 +6,7 @@
 #include "predictioncopy.h"
 #include "simulation.h"
 
-MovementSimulation::MovementSimulation() : _player(nullptr), _moveData{0}, _oldInPrediction(false), _oldFirstTimePredicted(false), _oldFrameTime(0.f) {
+MovementSimulation::MovementSimulation() : _player(nullptr), _moveData{0}, _oldInPrediction(false), _oldFirstTimePredicted(false), _oldFrameTime(0.0f) {
 }
 
 void MovementSimulation::Start(CBasePlayer* player) {

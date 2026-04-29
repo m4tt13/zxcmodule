@@ -22,11 +22,11 @@ PreFrameStageNotify( number stage )
 PostFrameStageNotify( number stage )  
 PreRunCommand( Player ply, CUserCmd cmd )  
 PostRunCommand( Player ply, CUserCmd cmd )  
-PreDrawModelExecute( Entity ent, number flags )  
-PostDrawModelExecute( Entity ent, number flags )  
+PreDrawModelExecute( string model_name, number entity_index, number flags )  
+PostDrawModelExecute( string model_name, number entity_index, number flags )  
 SendNetMsg( string msgname ) -> boolean  
 ShouldUpdateAnimation( Player ply ) -> boolean, number  
-OnMove() -> boolean  
+CL_Move() -> boolean  
 Effect_&lt;name&gt;( CEffectData edata ) -> boolean  
 ### Functions
 ServerCmd( string command, boolean reliable )  

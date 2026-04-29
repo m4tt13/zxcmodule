@@ -75,6 +75,7 @@
     <ClInclude Include="src\luashared.h" />
     <ClInclude Include="src\math.h" />
     <ClInclude Include="src\md5.h" />
+    <ClInclude Include="src\modelinfo.h" />
     <ClInclude Include="src\modelrender.h" />
     <ClInclude Include="src\netvars.h" />
     <ClInclude Include="src\patternscan.h" />

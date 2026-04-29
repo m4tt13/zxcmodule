@@ -22,6 +22,7 @@
 #include "clientstate.h"
 #include "isurface.h"
 #include "modelrender.h"
+#include "modelinfo.h"
 
 #include "minhook/minhook.h"
 
@@ -178,14 +179,6 @@ namespace detours {
 	}
 
 	void __fastcall DrawModelExecuteHookFunc(CModelRender* self, const DrawModelState_t* state, ModelRenderInfo_t* pInfo, matrix3x4_t* pCustomBoneToWorld) {
-
-		CBaseEntity* pEntity = pInfo->pRenderable->GetIClientUnknown()->GetBaseEntity();
-
-		if (!pEntity) {
-			DrawModelExecuteOriginal(self, state, pInfo, pCustomBoneToWorld);
-			return;
-		}
-
 		dmeContext.in_hook = true;
 		dmeContext.self = self;
 		dmeContext.state = state;
@@ -196,10 +189,11 @@ namespace detours {
 			auto* lua = interfaces::clientLua;
 
 			if (LuaHelpers::PushHookRun(lua, "PreDrawModelExecute" ) != 0) {
-				pEntity->PushEntity();
+				lua->PushString(interfaces::modelInfo->GetModelName(pInfo->pModel));
+				lua->PushNumber(pInfo->entity_index);
 				lua->PushNumber(pInfo->flags);
 
-				LuaHelpers::CallHookRun(lua, 2, 0);
+				LuaHelpers::CallHookRun(lua, 3, 0);
 			}
 		}
 
@@ -209,10 +203,11 @@ namespace detours {
 			auto* lua = interfaces::clientLua;
 
 			if (LuaHelpers::PushHookRun(lua, "PostDrawModelExecute" ) != 0) {
-				pEntity->PushEntity();
+				lua->PushString(interfaces::modelInfo->GetModelName(pInfo->pModel));
+				lua->PushNumber(pInfo->entity_index);
 				lua->PushNumber(pInfo->flags);
 
-				LuaHelpers::CallHookRun(lua, 2, 0);
+				LuaHelpers::CallHookRun(lua, 3, 0);
 			}
 		}
 
@@ -319,7 +314,7 @@ namespace detours {
 		if (luaInit) {
 			auto* lua = interfaces::clientLua;
 
-			if (LuaHelpers::PushHookRun(lua, "OnMove" ) != 0) {
+			if (LuaHelpers::PushHookRun(lua, "CL_Move" ) != 0) {
 				bool dontcall = false;
 				if (LuaHelpers::CallHookRun(lua, 0, 1))
 				{
@@ -341,10 +336,10 @@ namespace detours {
 	}
 
 	// Interpolate
-	using InterpolateFn = bool(__fastcall*)(CBasePlayer* self, float currentTime);
+	using InterpolateFn = bool(__fastcall*)(CBasePlayer* self, double currentTime);
 	InterpolateFn InterpolateOriginal = nullptr;
 
-	bool __fastcall InterpolateHookFunc(CBasePlayer* self, float currentTime) {
+	bool __fastcall InterpolateHookFunc(CBasePlayer* self, double currentTime) {
 		if (globals::shouldInterpolate)
 			return InterpolateOriginal(self, currentTime);
 
@@ -384,7 +379,7 @@ namespace detours {
 		if (!updateAllowed)
 			return;
 
-		float OldCurtime = interfaces::globalVars->curtime;
+		double OldCurtime = interfaces::globalVars->curtime;
 		float OldFrameTime = interfaces::globalVars->frametime;
 
 		interfaces::globalVars->curtime = self->m_flSimulationTime();

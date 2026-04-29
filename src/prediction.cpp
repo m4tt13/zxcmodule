@@ -11,7 +11,7 @@
 #include "patternscan.h"
 #include "util.h"
 
-Prediction::Prediction() : _moveData {0}, _oldCurTime(0.f), _oldFrameTime(0.f) {
+Prediction::Prediction() : _moveData {0}, _oldCurTime(0.0), _oldFrameTime(0.0f) {
 }
 
 void Prediction::Start(CUserCmd* cmd) {

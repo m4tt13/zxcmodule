@@ -4,11 +4,11 @@ class CClientState {
 public:
 	char		pad_0001[133992];
 
-	float		m_flLastServerTickTime;	// the timestamp of last message
+	double		m_flLastServerTickTime;	// the timestamp of last message
 	bool		insimulation;
 
 	int			oldtickcount;			// previous tick
-	float		m_tickRemainder;		// client copy of tick remainder
+	double		m_tickRemainder;		// client copy of tick remainder
 	float		m_frameTime;			// dt of the current frame
 
 	int			lastoutgoingcommand;	// Sequence number of last outgoing command

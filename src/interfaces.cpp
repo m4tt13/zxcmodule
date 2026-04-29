@@ -74,6 +74,7 @@ namespace interfaces {
 	CCvar* cvar = nullptr;
 	ISurface* surface = nullptr;
 	CModelRender* modelRender = nullptr;
+	IVModelInfo* modelInfo = nullptr;
 	CViewRender* view = nullptr;
 
 	void init() {
@@ -93,6 +94,7 @@ namespace interfaces {
 
 		CreateInterface<ENGINE>("VEngineClient015", engineClient);
 		CreateInterface<ENGINE>("VEngineModel016", modelRender);
+		CreateInterface<ENGINE>("VModelInfoClient006", modelInfo);
 		CreateInterface<ENGINE>("EngineTraceClient003", engineTrace);
 
 		CreateInterface<CLIENT>("VClient017", client);
