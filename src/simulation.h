@@ -31,6 +31,8 @@ private:
 	float _oldFrameTime;
 
 	CUserCmd _dummyCmd;
+
+	unsigned char* _backup;
 };
 
 extern MovementSimulation g_simulation;

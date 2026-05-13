@@ -59,6 +59,7 @@
     <ClInclude Include="src\crc32.h" />
     <ClInclude Include="src\cusercmd.h" />
     <ClInclude Include="src\cutlvector.h" />
+    <ClInclude Include="src\datamap.h" />
     <ClInclude Include="src\defines.h" />
     <ClInclude Include="src\effects.h" />
     <ClInclude Include="src\engineclient.h" />

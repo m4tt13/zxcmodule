@@ -86,10 +86,6 @@ public:
 	OFFSETVAR(int, m_iEFlags, 0x1F8); 
 	NETVAR(int, DT_BaseEntity, m_fEffects);
 
-	OFFSETVAR(unsigned char*, m_pOriginalData, 0x728);
-
-	void AllocateIntermediateData( void );
-
 	static void	SetPredictionRandomSeed( int seed );
 	static void	SetPredictionPlayer( const CBaseHandle& hndl );
 };
@@ -101,7 +97,6 @@ public:
 
 class CBaseAnimating : public CBaseEntity {
 public:
-	VPROXY(SetupBones, 16, bool, (matrix3x4_t* pBoneToWorldOut, int nMaxBones, int boneMask), pBoneToWorldOut, nMaxBones, boneMask);
 	VPROXY(UpdateClientsideAnimation, 235, void, (void)); // wrong index ( 297 )
 
 	OFFSETVAR(void*, m_hitboxBoneCacheHandle, 0x1A90);

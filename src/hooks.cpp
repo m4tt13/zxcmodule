@@ -45,6 +45,7 @@ namespace detours {
 		ClientEffectCallback orig;
 	};
 	std::vector<effect_hook_t> effect_hooks;
+	void* effect_trampolines = nullptr;
 
 	// Pre CreateMove
 	using PreCreateMoveFn = bool(__fastcall*)(ClientModeShared* self, float flInputSampleTime, CUserCmd* cmd);
@@ -414,36 +415,42 @@ namespace detours {
 			originalFunc(data);
 	}
 
-	void* hookEffect(void* effectName, void* originalFunc, void* hookFunc) {
-		static const unsigned char trampoline_bytes[] = { 
-			0x48, 0xBA, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11,
-			0x49, 0xB8, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11,
-			0x48, 0xB8, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11,
-			0x48, 0xFF, 0xE0 };              
-		void* trampoline = VirtualAlloc(nullptr, sizeof(trampoline_bytes), MEM_COMMIT|MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-		memcpy(trampoline, trampoline_bytes, sizeof(trampoline_bytes));
-		*(void**)((uintptr_t)trampoline + 2) = effectName;
-		*(void**)((uintptr_t)trampoline + 12) = originalFunc;
-		*(void**)((uintptr_t)trampoline + 22) = hookFunc;
-		return trampoline;
-	}
-
 	// Dispatch effect 
 	void hookEffects() {
 		static CClientEffectRegistration* s_pHead = *reinterpret_cast<CClientEffectRegistration**>(getAbsAddr(findPattern("client.dll", "48 8B 1D ?? ?? ?? ?? 48 85 DB 74 ?? 0F 1F 40 ?? 48 8B 0B")));
-		for (CClientEffectRegistration* pReg = s_pHead; pReg; pReg = pReg->m_pNext) {
+		for (CClientEffectRegistration* pReg = s_pHead; pReg; pReg = pReg->m_pNext)
 			effect_hooks.push_back({pReg, pReg->m_pFunction});
-			pReg->m_pFunction = (ClientEffectCallback)hookEffect((void*)pReg->m_pEffectName, (void*)pReg->m_pFunction, (void*)&EffectFunctionHookFunc);
+
+		static const unsigned char trampoline_bytes[] = { 
+				0x48, 0xBA, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11,
+				0x49, 0xB8, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11,
+				0x48, 0xB8, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11,
+				0x48, 0xFF, 0xE0 };
+
+		if (!effect_hooks.empty())
+			effect_trampolines = VirtualAlloc(nullptr, effect_hooks.size()*sizeof(trampoline_bytes), MEM_COMMIT|MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+
+		uintptr_t cur_trampoline = (uintptr_t)effect_trampolines;
+		for (effect_hook_t h : effect_hooks) {
+			memcpy((void*)cur_trampoline, trampoline_bytes, sizeof(trampoline_bytes));
+			*(void**)(cur_trampoline + 2) = (void*)h.reg->m_pEffectName;
+			*(void**)(cur_trampoline + 12) = (void*)h.reg->m_pFunction;
+			*(void**)(cur_trampoline + 22) = (void*)&EffectFunctionHookFunc;
+			h.reg->m_pFunction = (ClientEffectCallback)cur_trampoline;
+			cur_trampoline += sizeof(trampoline_bytes);
 		}
 	}
 
 	void unhookEffects() {
-		for (effect_hook_t h : effect_hooks) {
-			void* trampoline = h.reg->m_pFunction;
+		for (effect_hook_t h : effect_hooks)
 			h.reg->m_pFunction = h.orig;
-			VirtualFree(trampoline, 0, MEM_RELEASE);
-		}
+
 		effect_hooks.clear();
+
+		if (effect_trampolines) {
+			VirtualFree(effect_trampolines, 0, MEM_RELEASE);
+			effect_trampolines = nullptr;
+		}
 	}
 
 	void SimTimeProxyFunc(const CRecvProxyData* pData, void* pStruct, void* pOut)

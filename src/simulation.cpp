@@ -4,9 +4,11 @@
 #include "entity.h"
 #include "cprediction.h"
 #include "predictioncopy.h"
+#include "datamap.h"
+#include "engineclient.h"
 #include "simulation.h"
 
-MovementSimulation::MovementSimulation() : _player(nullptr), _moveData{0}, _oldInPrediction(false), _oldFirstTimePredicted(false), _oldFrameTime(0.0f) {
+MovementSimulation::MovementSimulation() : _player(nullptr), _moveData{0}, _oldInPrediction(false), _oldFirstTimePredicted(false), _oldFrameTime(0.0f), _backup(nullptr) {
 }
 
 void MovementSimulation::Start(CBasePlayer* player) {
@@ -21,17 +23,19 @@ void MovementSimulation::Start(CBasePlayer* player) {
 	_oldFirstTimePredicted = interfaces::prediction->IsFirstTimePredicted();
 	_oldFrameTime = interfaces::globalVars->frametime;
 
-	// the hacks that make it work
-	player->m_bDucked() = player->IsDucking();
-	player->m_bDucking() = false;
-	player->m_bInDuckJump() = false;
-	player->m_flDucktime() = 0.0f;
-	player->m_flDuckJumpTime() = 0.0f;
-	player->m_flJumpTime() = 0.0f;
-	player->m_hGroundEntity() = player->IsOnGround() ? interfaces::entityList->GetClientEntity(0)->GetClientUnknown()->GetRefEHandle() : INVALID_EHANDLE_INDEX;
+	if (player->GetClientNetworkable()->entIndex() != interfaces::engineClient->GetLocalPlayer()) {
+		// the hacks that make it work
+		player->m_bDucked() = player->IsDucking();
+		player->m_bDucking() = false;
+		player->m_bInDuckJump() = false;
+		player->m_flDucktime() = 0.0f;
+		player->m_flDuckJumpTime() = 0.0f;
+		player->m_flJumpTime() = 0.0f;
+		player->m_hGroundEntity() = player->IsOnGround() ? interfaces::entityList->GetClientEntity(0)->GetClientUnknown()->GetRefEHandle() : INVALID_EHANDLE_INDEX;
 
-	if (player->IsOnGround())
-		player->GetAbsOrigin().z += 0.03125f; //to prevent getting stuck in the ground
+		if (player->IsOnGround())
+			player->GetAbsOrigin().z += 0.03125f; //to prevent getting stuck in the ground
+	}
 
 	// Setup move data
 	SetupMoveData(player);
@@ -93,17 +97,24 @@ void MovementSimulation::SetupMoveData(CBasePlayer* player) {
 }
 
 void MovementSimulation::Store(CBasePlayer* player) {
-	player->AllocateIntermediateData();
-
-	assert(player->m_pOriginalData());
-	CPredictionCopy copyHelper( PC_EVERYTHING, player->m_pOriginalData(), PC_DATA_PACKED, player, PC_DATA_NORMAL );
-	copyHelper.TransferData("MovementSimulationStore", player->GetClientNetworkable()->entIndex(), player->GetPredDescMap());
+	datamap_t* map = player->GetPredDescMap();
+	if (map && map->packed_offsets_computed && map->packed_size > 0) {
+		size_t allocsize = max(map->packed_size, 4);
+		_backup = new unsigned char[allocsize];
+		memset(_backup, 0, allocsize);
+		CPredictionCopy copyHelper(PC_EVERYTHING, _backup, PC_DATA_PACKED, player, PC_DATA_NORMAL);
+		copyHelper.TransferData("MovementSimulationStore", player->GetClientNetworkable()->entIndex(), map);
+	}
 }
 
 void MovementSimulation::Restore(CBasePlayer* player) {
-	assert(player->m_pOriginalData());
-	CPredictionCopy copyHelper( PC_EVERYTHING, player, PC_DATA_NORMAL, player->m_pOriginalData(), PC_DATA_PACKED );
-	copyHelper.TransferData("MovementSimulationRestore", player->GetClientNetworkable()->entIndex(), player->GetPredDescMap());
+	datamap_t* map = player->GetPredDescMap();
+	if (map && _backup) {
+		CPredictionCopy copyHelper(PC_EVERYTHING, player, PC_DATA_NORMAL, _backup, PC_DATA_PACKED);
+		copyHelper.TransferData("MovementSimulationRestore", player->GetClientNetworkable()->entIndex(), map);
+		delete[] _backup;
+		_backup = nullptr;
+	}
 }
 
 MovementSimulation g_simulation;
