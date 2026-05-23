@@ -8,7 +8,96 @@
 #include "engineclient.h"
 #include "simulation.h"
 
+static int g_FieldSizes[FIELD_TYPECOUNT] = {0,4,8,12,16,4,1,2,1,4,0,0,8,4,8,12,4,4,8,8,8,8,64,64,48,8,4,4,8,8,8,8,8};
+
 MovementSimulation::MovementSimulation() : _player(nullptr), _moveData{0}, _oldInPrediction(false), _oldFirstTimePredicted(false), _oldFrameTime(0.0f), _backup(nullptr) {
+}
+
+void MovementSimulation::DestroyBackupData() {
+	if (_backup) {
+		for (int offset : _dataTableOffsets) {
+			IGMODDataTable* dataTable = *reinterpret_cast<IGMODDataTable**>(reinterpret_cast<std::uintptr_t>(_backup) + offset);
+			if (dataTable)
+				interfaces::engineClient->GMOD_DestroyDataTable(dataTable);
+		}
+		_dataTableOffsets.clear();
+		delete[] _backup;
+		_backup = nullptr;
+	}
+}
+
+int MovementSimulation::CollectDataTableOffsets_R( datamap_t *map ) {
+	int current_position = 0;
+
+	if ( map->baseMap )
+		current_position += CollectDataTableOffsets_R( map->baseMap );
+
+	int c = map->dataNumFields;
+	int i;
+	typedescription_t *field;
+
+	for ( i = 0; i < c; i++ ) {
+		field = &map->dataDesc[ i ];
+		if ( field->fieldType != FIELD_EMBEDDED ) {
+			if ( field->flags & FTYPEDESC_PRIVATE )
+				continue;
+		}
+
+		switch ( field->fieldType )
+		{
+		case FIELD_EMBEDDED:
+			{
+				int embeddedsize = CollectDataTableOffsets_R( field->td );
+				field->flatOffset[ TD_OFFSET_NORMAL ] = field->fieldOffset;
+				field->flatOffset[ TD_OFFSET_PACKED ] = current_position;
+				current_position += embeddedsize;
+			}
+			break;
+
+		case FIELD_GMODTABLE: _dataTableOffsets.push_back( current_position );
+		case FIELD_FLOAT:
+		case FIELD_VECTOR:
+		case FIELD_QUATERNION:
+		case FIELD_INTEGER:
+		case FIELD_EHANDLE:
+		case FIELD_DOUBLE:
+			{
+				current_position = (current_position + 3) & ~3;
+				field->flatOffset[ TD_OFFSET_NORMAL ] = field->fieldOffset;
+				field->flatOffset[ TD_OFFSET_PACKED ] = current_position;
+				current_position += g_FieldSizes[ field->fieldType ] * field->fieldSize;
+			}
+			break;
+
+		case FIELD_SHORT:
+			{
+				current_position = (current_position + 1) & ~1;
+				field->flatOffset[ TD_OFFSET_NORMAL ] = field->fieldOffset;
+				field->flatOffset[ TD_OFFSET_PACKED ] = current_position;
+				current_position += g_FieldSizes[ field->fieldType ] * field->fieldSize;
+			}
+			break;
+
+		case FIELD_STRING:
+		case FIELD_COLOR32:
+		case FIELD_BOOLEAN:
+		case FIELD_CHARACTER:
+			{
+				field->flatOffset[ TD_OFFSET_NORMAL ] = field->fieldOffset;
+				field->flatOffset[ TD_OFFSET_PACKED ] = current_position;
+				current_position += g_FieldSizes[ field->fieldType ] * field->fieldSize;
+			}
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	map->packed_size = current_position;
+	map->packed_offsets_computed = true;
+
+	return current_position;
 }
 
 void MovementSimulation::Start(CBasePlayer* player) {
@@ -98,10 +187,14 @@ void MovementSimulation::SetupMoveData(CBasePlayer* player) {
 
 void MovementSimulation::Store(CBasePlayer* player) {
 	datamap_t* map = player->GetPredDescMap();
-	if (map && map->packed_offsets_computed && map->packed_size > 0) {
-		size_t allocsize = max(map->packed_size, 4);
-		_backup = new unsigned char[allocsize];
-		memset(_backup, 0, allocsize);
+	if (map) {
+		if (!_backup) {
+			CollectDataTableOffsets_R(map);
+			size_t allocsize = max(map->packed_size, 4);
+			_backup = new unsigned char[allocsize];
+			memset(_backup, 0, allocsize);
+		}
+
 		CPredictionCopy copyHelper(PC_EVERYTHING, _backup, PC_DATA_PACKED, player, PC_DATA_NORMAL);
 		copyHelper.TransferData("MovementSimulationStore", player->GetClientNetworkable()->entIndex(), map);
 	}
@@ -112,8 +205,6 @@ void MovementSimulation::Restore(CBasePlayer* player) {
 	if (map && _backup) {
 		CPredictionCopy copyHelper(PC_EVERYTHING, player, PC_DATA_NORMAL, _backup, PC_DATA_PACKED);
 		copyHelper.TransferData("MovementSimulationRestore", player->GetClientNetworkable()->entIndex(), map);
-		delete[] _backup;
-		_backup = nullptr;
 	}
 }
 

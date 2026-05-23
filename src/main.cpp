@@ -1330,6 +1330,7 @@ GMOD_MODULE_OPEN() {
 GMOD_MODULE_CLOSE() {
 	detours::unHook();
 	spoofedConVars.clear();
+	g_simulation.DestroyBackupData();
 
 	return 0;
 }

@@ -3,28 +3,19 @@
 struct datamap_t;
 struct typedescription_t;
 
-enum
-{
-	TD_OFFSET_NORMAL = 0,
-	TD_OFFSET_PACKED = 1,
-	TD_OFFSET_COUNT,
-};
-
-enum
-{
+enum {
 	PC_EVERYTHING = 0,
 	PC_NON_NETWORKED_ONLY,
 	PC_NETWORKED_ONLY,
 };
 
-#define PC_DATA_PACKED			true
-#define PC_DATA_NORMAL			false
+#define PC_DATA_PACKED	true
+#define PC_DATA_NORMAL	false
 
 typedef void ( *FN_FIELD_COMPARE )( const char *classname, const char *fieldname, const char *fieldtype,
 	bool networked, bool noterrorchecked, bool differs, bool withintolerance, const char *value );
 
-class CPredictionCopy
-{
+class CPredictionCopy {
 public:
 	CPredictionCopy( int type, void *dest, bool dest_packed, void const *src, bool src_packed,
 		bool counterrors = false, bool reporterrors = false, bool performcopy = true, 

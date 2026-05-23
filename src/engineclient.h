@@ -3,6 +3,7 @@
 
 class INetChannelInfo;
 class INetChannel;
+class IGMODDataTable;
 
 enum ClientFrameStage_t
 {
@@ -41,6 +42,7 @@ public:
 	VPROXY(SetRestrictServerCommands, 107, void, (bool bRestrict), bRestrict);
 	VPROXY(SetRestrictClientCommands, 108, void, (bool bRestrict), bRestrict);
 	VPROXY(GMOD_RawClientCmd_Unrestricted, 139, void, (char const* szCmdString), szCmdString);
+	VPROXY(GMOD_DestroyDataTable, 141, void, (IGMODDataTable* dataTable), dataTable);
 	 
 	INetChannel* GetNetChannel() { return reinterpret_cast<INetChannel*>(GetNetChannelInfo()); }
 }; 

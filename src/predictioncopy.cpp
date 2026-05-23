@@ -1,10 +1,10 @@
 #include "predictioncopy.h"
 #include "patternscan.h"
+#include "datamap.h"
 
 CPredictionCopy::CPredictionCopy( int type, void *dest, bool dest_packed, void const *src, bool src_packed, 
 	bool counterrors /*= false*/, bool reporterrors /*= false*/, bool performcopy /*= true*/,
-	bool describefields /*= false*/, FN_FIELD_COMPARE func /*= nullptr*/ )
-{
+	bool describefields /*= false*/, FN_FIELD_COMPARE func /*= nullptr*/ ) {
 	m_nType				= type;
 	m_pDest				= dest;
 	m_pSrc				= src;
@@ -25,8 +25,7 @@ CPredictionCopy::CPredictionCopy( int type, void *dest, bool dest_packed, void c
 	m_FieldCompareFunc	= func;
 }
 
-int CPredictionCopy::TransferData( const char *operation, int entindex, datamap_t *dmap )
-{
+int CPredictionCopy::TransferData( const char *operation, int entindex, datamap_t *dmap ) {
 	using TransferDataFn = int(__fastcall*)(void*, const char *, int, datamap_t *);
 	static TransferDataFn _TransferData = (TransferDataFn)findPattern("client.dll", "48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 48 83 EC ? FF 05");
 
