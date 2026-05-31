@@ -307,7 +307,7 @@ LUA_FUNCTION(SetTyping) {
 	return 0;
 }
 
-LUA_FUNCTION(EnableContextMenu) {
+LUA_FUNCTION(SetContextMenu) {
 	LUA->CheckType(1, Type::UserCmd);
 	LUA->CheckType(2, Type::Bool);
 
@@ -1224,7 +1224,7 @@ GMOD_MODULE_OPEN() {
 		PushApiFunction("SetCommandNumber", SetCommandNumber);
 		PushApiFunction("SetCommandTick", SetCommandTick);
 		PushApiFunction("SetTyping", SetTyping);
-		PushApiFunction("EnableContextMenu", EnableContextMenu);
+		PushApiFunction("SetContextMenu", SetContextMenu);
 		PushApiFunction("SetContextVector", SetContextVector);
 		PushApiFunction("GetRandomSeed", GetRandomSeed);
 		PushApiFunction("SetRandomSeed", SetRandomSeed);

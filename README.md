@@ -72,7 +72,7 @@ SpoofedConVarSetNumber( string name, number num ) -> boolean
 SetCommandNumber( CUserCmd cmd, number num )  
 SetCommandTick( CUserCmd cmd, number tick )  
 SetTyping( CUserCmd cmd, boolean typing )  
-EnableContextMenu( CUserCmd cmd, boolean enable )  
+SetContextMenu( CUserCmd cmd, boolean enable )  
 SetContextVector( CUserCmd cmd, Vector normal )  
 GetRandomSeed( CUserCmd cmd ) -> number  
 SetRandomSeed( CUserCmd cmd, number seed )  
@@ -132,7 +132,7 @@ SetInSequenceNr( number val )
 SetChallengeNr( number val )  
 SetDataRate( number val )  
 GetPacketBytes( number flow, number frame_num, number group ) -> number  
-GetInSequenceNr( number val )  
+GetInSequenceNr()  
 GetPacketTime( number flow, number frame_num ) -> number  
 IsValidPacket( number flow, number frame_num ) -> boolean  
 GetOutSequenceNrAck() -> number  

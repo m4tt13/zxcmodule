@@ -99,7 +99,7 @@ class CBaseAnimating : public CBaseEntity {
 public:
 	VPROXY(UpdateClientsideAnimation, 235, void, (void)); // wrong index ( 297 )
 
-	OFFSETVAR(void*, m_hitboxBoneCacheHandle, 0x1A90);
+	OFFSETVAR(void*, m_hitboxBoneCacheHandle, 0x1A80);
 	NETVAR(bool, DT_BaseAnimating, m_bClientSideAnimation);
 	NETVAR(float, DT_BaseAnimating, m_flModelScale);
 };
@@ -116,8 +116,8 @@ public:
 	bool IsInNoclip() { return GetMoveType() == MoveType::NOCLIP; }
 
 	// CPrediction__RunCommand 2 line
-	OFFSETVAR(CUserCmd*, GetCurrentCommand, 0x2C50); 
-	OFFSETVAR(CBasePlayerAnimState*, GetAnimState, 0x35D8);
+	OFFSETVAR(CUserCmd*, GetCurrentCommand, 0x2C40); 
+	OFFSETVAR(CBasePlayerAnimState*, GetAnimState, 0x35C8);
 
 	NETVAR(char, DT_GMOD_Player, m_nWaterLevel);
 
