@@ -2,11 +2,13 @@
 #include "globals.h"
 
 namespace globals {
-	bool	bSendPacket					= true;
+	bool		bSendPacket					= true;
 
-	bool	shouldInterpolate			= true;
-	bool	shouldInterpolateSequences	= true;
-	bool	shouldFixAnimations			= false;
+	bool		shouldInterpolate			= true;
+	bool		shouldInterpolateSequences	= true;
+	bool		shouldFixAnimations			= false;
 
-	bool	bLoopMove					= false;
+	bool		bLoopMove					= false;
+
+	CBasePlayer* localPlayer				= nullptr;
 }

@@ -71,8 +71,8 @@ public:
 
 	VPROXY(GetPredDescMap, 15, datamap_t*, (void));
 	VPROXY(GetBaseAnimating, 39, CBaseAnimating*, (void));
-	VPROXY(IsPlayer, 131, bool, (void));
-	VPROXY(PushEntity, 173, void, (void));
+	VPROXY(IsPlayer, 132, bool, (void));
+	VPROXY(PushEntity, 174, void, (void));
 
 	NETVAR(double, DT_BaseEntity, m_flSimulationTime);
 
@@ -97,7 +97,7 @@ public:
 
 class CBaseAnimating : public CBaseEntity {
 public:
-	VPROXY(UpdateClientsideAnimation, 235, void, (void)); // wrong index ( 297 )
+	VPROXY(UpdateClientsideAnimation, 236, void, (void)); // wrong index ( 297 )
 
 	OFFSETVAR(void*, m_hitboxBoneCacheHandle, 0x1A80);
 	NETVAR(bool, DT_BaseAnimating, m_bClientSideAnimation);

@@ -1,12 +1,16 @@
 
 #pragma once
 
+class CBasePlayer;
+
 namespace globals {
-	extern bool		bSendPacket;
+	extern bool			bSendPacket;
 
-	extern bool		shouldInterpolate;
-	extern bool		shouldInterpolateSequences;
-	extern bool		shouldFixAnimations;
+	extern bool			shouldInterpolate;
+	extern bool			shouldInterpolateSequences;
+	extern bool			shouldFixAnimations;
 
-	extern bool		bLoopMove;
+	extern bool			bLoopMove;
+
+	extern CBasePlayer* localPlayer;
 }

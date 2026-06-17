@@ -31,28 +31,12 @@ extern "C" void CreateMoveHookFuncNaked();
 class CStudioHdr;
 
 namespace detours {
-	bool luaInit = false;
-
-	auto SeqChangePattern = findPattern("client.dll", "48 85 D2 0F 84 ?? ?? ?? ?? 48 89 6C 24 ?? 48 89 74 24 ?? 48 89 7C 24");
-	auto CL_MovePattern = findPattern("engine.dll", "40 55 53 48 8D AC 24 ?? ?? ?? ?? B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 2B E0 0F 29 B4 24");
-
-	RecvVarProxyFn simTimeProxyFuncOriginal = nullptr;
-	RecvProp* simTimeRecvProp = nullptr;
-	CBasePlayer* localPlayer = nullptr;
-
-	struct effect_hook_t {
-		CClientEffectRegistration* reg;
-		ClientEffectCallback orig;
-	};
-	std::vector<effect_hook_t> effect_hooks;
-	void* effect_trampolines = nullptr;
-
 	// Pre CreateMove
 	using PreCreateMoveFn = bool(__fastcall*)(ClientModeShared* self, float flInputSampleTime, CUserCmd* cmd);
 	PreCreateMoveFn preCreateMoveOriginal = nullptr;
 
 	bool __fastcall ClientModeCreateMoveHookFunc(ClientModeShared* self, float flInputSampleTime, CUserCmd* cmd) {
-		if (luaInit) {
+		{
 			auto* lua = interfaces::clientLua;
 
 			if (LuaHelpers::PushHookRun(lua, "PreCreateMove" ) != 0) {
@@ -75,7 +59,7 @@ namespace detours {
 
 		postCreateMoveOriginal(self, sequence_number, input_sample_frametime, active);
 
-		if (luaInit) {
+		{
 			auto* lua = interfaces::clientLua;
 
 			if (LuaHelpers::PushHookRun(lua, "PostCreateMove" ) != 0) {
@@ -94,13 +78,10 @@ namespace detours {
 	FrameStageFn FrameStageOriginal = nullptr;
 	
 	void __fastcall FrameStageNotifyHookFunc(CHLClient* self, int stage) {
-		if (!luaInit && stage == ClientFrameStage_t::FRAME_START) {
-			interfaces::clientLua = interfaces::luaShared->GetLuaInterface(static_cast<int>(LuaInterface::CLIENT));
-			
-			luaInit = true;
-		}
+		if (!globals::localPlayer && stage == ClientFrameStage_t::FRAME_START)
+			postInit();
 
-		if (luaInit) {
+		{
 			auto* lua = interfaces::clientLua;
 
 			if (LuaHelpers::PushHookRun(lua, "PreFrameStageNotify" ) != 0) {
@@ -112,7 +93,7 @@ namespace detours {
 
 		FrameStageOriginal(self, stage);
 
-		if (luaInit) {
+		{
 			auto* lua = interfaces::clientLua;
 
 			if (LuaHelpers::PushHookRun(lua, "PostFrameStageNotify" ) != 0) {
@@ -136,7 +117,7 @@ namespace detours {
 	RunCommandFn RunCommandOriginal = nullptr;
 	
 	void __fastcall RunCommandHookFunc(CPrediction* self, CBasePlayer* player, CUserCmd* ucmd, IMoveHelper* moveHelper) {
-		if (luaInit) {
+		{
 			auto* lua = interfaces::clientLua;
 
 			if (LuaHelpers::PushHookRun(lua, "PreRunCommand" ) != 0) {
@@ -149,7 +130,7 @@ namespace detours {
 
 		RunCommandOriginal(self, player, ucmd, moveHelper);
 
-		if (luaInit) {
+		{
 			auto* lua = interfaces::clientLua;
 
 			if (LuaHelpers::PushHookRun(lua, "PostRunCommand" ) != 0) {
@@ -186,7 +167,7 @@ namespace detours {
 		dmeContext.pInfo = pInfo;
 		dmeContext.pCustomBoneToWorld = pCustomBoneToWorld;
 
-		if (luaInit) {
+		{
 			auto* lua = interfaces::clientLua;
 
 			if (LuaHelpers::PushHookRun(lua, "PreDrawModelExecute" ) != 0) {
@@ -200,7 +181,7 @@ namespace detours {
 
 		DrawModelExecuteOriginal(self, state, pInfo, pCustomBoneToWorld);
 
-		if (luaInit) {
+		{
 			auto* lua = interfaces::clientLua;
 
 			if (LuaHelpers::PushHookRun(lua, "PostDrawModelExecute" ) != 0) {
@@ -268,7 +249,7 @@ namespace detours {
 
 		auto msgName = msg.GetName();
 
-		if (luaInit) {
+		{
 			auto* lua = interfaces::clientLua;
 
 			if (LuaHelpers::PushHookRun(lua, "SendNetMsg" ) != 0) {
@@ -312,7 +293,7 @@ namespace detours {
 	CLMoveFn CLMoveOriginal = nullptr;
 
 	void __fastcall CLMoveHookFunc(float accumulated_extra_samples, bool bFinalTick) {
-		if (luaInit) {
+		{
 			auto* lua = interfaces::clientLua;
 
 			if (LuaHelpers::PushHookRun(lua, "CL_Move" ) != 0) {
@@ -344,7 +325,7 @@ namespace detours {
 		if (globals::shouldInterpolate)
 			return InterpolateOriginal(self, currentTime);
 
-		return (self == localPlayer) ? InterpolateOriginal(self, currentTime) : true;
+		return (self == globals::localPlayer) ? InterpolateOriginal(self, currentTime) : true;
 	}
 
 	// UpdateClientsideAnimation
@@ -358,7 +339,7 @@ namespace detours {
 		bool updateAllowed = false;
 		int updateTicks = 1;
 
-		if (luaInit) {
+		{
 			auto* lua = interfaces::clientLua;
 
 			if (LuaHelpers::PushHookRun(lua, "ShouldUpdateAnimation" ) != 0) {
@@ -394,7 +375,7 @@ namespace detours {
 
 	void __fastcall EffectFunctionHookFunc(CEffectData& data, const char* effectName, ClientEffectCallback originalFunc) {
 		bool dontcall = false;
-		if (luaInit) {
+		{
 			auto* lua = interfaces::clientLua;
 
 			std::string hookName = "Effect_";
@@ -416,6 +397,13 @@ namespace detours {
 	}
 
 	// Dispatch effect 
+	struct effect_hook_t {
+		CClientEffectRegistration* reg;
+		ClientEffectCallback orig;
+	};
+	std::vector<effect_hook_t> effect_hooks;
+	void* effect_trampolines = nullptr;
+
 	void hookEffects() {
 		static CClientEffectRegistration* s_pHead = *reinterpret_cast<CClientEffectRegistration**>(getAbsAddr(findPattern("client.dll", "48 8B 1D ?? ?? ?? ?? 48 85 DB 74 ?? 0F 1F 40 ?? 48 8B 0B")));
 		for (CClientEffectRegistration* pReg = s_pHead; pReg; pReg = pReg->m_pNext)
@@ -453,6 +441,10 @@ namespace detours {
 		}
 	}
 
+	// m_flSimulationTime fix
+	RecvVarProxyFn simTimeProxyFuncOriginal = nullptr;
+	RecvProp* simTimeRecvProp = nullptr;
+
 	void SimTimeProxyFunc(const CRecvProxyData* pData, void* pStruct, void* pOut)
 	{
 		if (!pData->m_Value.m_Int)
@@ -481,7 +473,12 @@ namespace detours {
 	}
 
 	void hook() {
-		void* SendNetMsgT = vmt::get<void*>(interfaces::engineClient->GetNetChannel(), 40);
+		auto SeqChangePattern = findPattern("client.dll", "48 85 D2 0F 84 ?? ?? ?? ?? 48 89 6C 24 ?? 48 89 74 24 ?? 48 89 7C 24");
+		auto CL_MovePattern = findPattern("engine.dll", "40 55 53 48 8D AC 24 ?? ?? ?? ?? B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 2B E0 0F 29 B4 24");
+
+		INetChannel* netChan = interfaces::engineClient->GetNetChannel();
+		assert(netChan != nullptr);
+		void* SendNetMsgT = vmt::get<void*>(netChan, 40);
 
 		vmt::hook(interfaces::clientMode, &preCreateMoveOriginal, (const void*)ClientModeCreateMoveHookFunc, 21);
 		vmt::hook(interfaces::client, &postCreateMoveOriginal, (const void*)CreateMoveHookFuncNaked, 21);
@@ -505,16 +502,20 @@ namespace detours {
 	}
 
 	void postInit() {
-		localPlayer = reinterpret_cast<CBasePlayer*>(interfaces::entityList->GetClientEntity(interfaces::engineClient->GetLocalPlayer()));
+		CBasePlayer* localPlayer = reinterpret_cast<CBasePlayer*>(interfaces::entityList->GetClientEntity(interfaces::engineClient->GetLocalPlayer()));
 
-		void* InterpolateT = vmt::get<void*>(localPlayer, 100);
-		void* UpdateClientAnimsT = vmt::get<void*>(localPlayer, 235);
+		if (localPlayer) {
+			globals::localPlayer = localPlayer;
 
-		MH_CreateHook(InterpolateT, (LPVOID)&InterpolateHookFunc, (LPVOID*)&InterpolateOriginal);
-		MH_CreateHook(UpdateClientAnimsT, (LPVOID)&UpdateClientsideAnimationHookFunc, (LPVOID*)&UpdateClientsideAnimationOriginal);
+			void* InterpolateT = vmt::get<void*>(localPlayer, 100);
+			void* UpdateClientAnimsT = vmt::get<void*>(localPlayer, 236);
 
-		MH_EnableHook(InterpolateT);
-		MH_EnableHook(UpdateClientAnimsT);
+			MH_CreateHook(InterpolateT, (LPVOID)&InterpolateHookFunc, (LPVOID*)&InterpolateOriginal);
+			MH_CreateHook(UpdateClientAnimsT, (LPVOID)&UpdateClientsideAnimationHookFunc, (LPVOID*)&UpdateClientsideAnimationOriginal);
+
+			MH_EnableHook(InterpolateT);
+			MH_EnableHook(UpdateClientAnimsT);
+		}
 	}
 
 	void unHook() {

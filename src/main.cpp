@@ -1160,15 +1160,13 @@ LUA_FUNCTION(PushSpecial) {
 
 // Api
 
-ILuaBase* luaBase;
 auto PushApiFunction = [&](const char* name, CFunc func) {
-	luaBase->PushCFunction(func);
-	luaBase->SetField(-2, name);
+	interfaces::clientLua->PushCFunction(func);
+	interfaces::clientLua->SetField(-2, name);
 };
 
 GMOD_MODULE_OPEN() {
-	 
-	luaBase = LUA;
+	interfaces::clientLua = LUA;
 
 	interfaces::init();
 	netvars::init();

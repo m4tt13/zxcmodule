@@ -10,16 +10,19 @@
 #include "gamemovement.h"
 #include "patternscan.h"
 #include "util.h"
+#include "globals.h"
 
 Prediction::Prediction() : _moveData {0}, _oldCurTime(0.0), _oldFrameTime(0.0f) {
 }
 
 void Prediction::Start(CUserCmd* cmd) {
-	CBasePlayer* localPlayer = reinterpret_cast<CBasePlayer*>(interfaces::entityList->GetClientEntity(interfaces::engineClient->GetLocalPlayer()));
+	CBasePlayer* localPlayer = globals::localPlayer;
+	if (!localPlayer)
+		return;
 
 	localPlayer->GetCurrentCommand() = cmd;
-	localPlayer->SetPredictionRandomSeed( cmd->random_seed );
-	localPlayer->SetPredictionPlayer( localPlayer->GetClientUnknown()->GetRefEHandle() );
+	localPlayer->SetPredictionRandomSeed(cmd->random_seed);
+	localPlayer->SetPredictionPlayer(localPlayer->GetClientUnknown()->GetRefEHandle());
 
 	_oldCurTime = interfaces::globalVars->curtime;
 	_oldFrameTime = interfaces::globalVars->frametime;
@@ -47,7 +50,9 @@ void Prediction::Start(CUserCmd* cmd) {
 }
 
 void Prediction::Finish() {
-	CBasePlayer* localPlayer = reinterpret_cast<CBasePlayer*>(interfaces::entityList->GetClientEntity(interfaces::engineClient->GetLocalPlayer()));
+	CBasePlayer* localPlayer = globals::localPlayer;
+	if (!localPlayer)
+		return;
 
 	interfaces::gameMovement->FinishTrackPredictionErrors(localPlayer);
 
@@ -55,8 +60,8 @@ void Prediction::Finish() {
 	interfaces::globalVars->frametime = _oldFrameTime;
 
 	localPlayer->GetCurrentCommand() = nullptr;
-	localPlayer->SetPredictionRandomSeed( -1 );
-	localPlayer->SetPredictionPlayer( INVALID_EHANDLE_INDEX );
+	localPlayer->SetPredictionRandomSeed(-1);
+	localPlayer->SetPredictionPlayer(INVALID_EHANDLE_INDEX);
 }
 
 Prediction g_prediction;

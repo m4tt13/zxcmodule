@@ -6,6 +6,7 @@
 #include "predictioncopy.h"
 #include "datamap.h"
 #include "engineclient.h"
+#include "globals.h"
 #include "simulation.h"
 
 static int g_FieldSizes[FIELD_TYPECOUNT] = {0,4,8,12,16,4,1,2,1,4,0,0,8,4,8,12,4,4,8,8,8,8,64,64,48,8,4,4,8,8,8,8,8};
@@ -112,7 +113,7 @@ void MovementSimulation::Start(CBasePlayer* player) {
 	_oldFirstTimePredicted = interfaces::prediction->IsFirstTimePredicted();
 	_oldFrameTime = interfaces::globalVars->frametime;
 
-	if (player->GetClientNetworkable()->entIndex() != interfaces::engineClient->GetLocalPlayer()) {
+	if (player != globals::localPlayer) {
 		// the hacks that make it work
 		player->m_bDucked() = player->IsDucking();
 		player->m_bDucking() = false;
@@ -120,10 +121,17 @@ void MovementSimulation::Start(CBasePlayer* player) {
 		player->m_flDucktime() = 0.0f;
 		player->m_flDuckJumpTime() = 0.0f;
 		player->m_flJumpTime() = 0.0f;
-		player->m_hGroundEntity() = player->IsOnGround() ? interfaces::entityList->GetClientEntity(0)->GetClientUnknown()->GetRefEHandle() : INVALID_EHANDLE_INDEX;
 
-		if (player->IsOnGround())
-			player->GetAbsOrigin().z += 0.03125f; //to prevent getting stuck in the ground
+		if (player->IsOnGround()) {
+			player->GetAbsOrigin().z += 0.03125f; // to prevent getting stuck in the ground
+
+			CBaseEntity* worldEnt = interfaces::entityList->GetClientEntity(0);
+			if (worldEnt)
+				player->m_hGroundEntity() = worldEnt->GetClientUnknown()->GetRefEHandle();
+		}
+		else {
+			player->m_hGroundEntity() = INVALID_EHANDLE_INDEX;
+		}
 	}
 
 	// Setup move data
