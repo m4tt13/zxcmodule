@@ -39,7 +39,7 @@ namespace detours {
 		{
 			auto* lua = interfaces::clientLua;
 
-			if (LuaHelpers::PushHookRun(lua, "PreCreateMove" ) != 0) {
+			if (LuaHelpers::PushHookRun(lua, "PreCreateMove") != 0) {
 				lua->PushUserType(cmd, Type::UserCmd);
 
 				LuaHelpers::CallHookRun(lua, 1, 0);
@@ -62,7 +62,7 @@ namespace detours {
 		{
 			auto* lua = interfaces::clientLua;
 
-			if (LuaHelpers::PushHookRun(lua, "PostCreateMove" ) != 0) {
+			if (LuaHelpers::PushHookRun(lua, "PostCreateMove") != 0) {
 				lua->PushUserType(cmd, Type::UserCmd);
 
 				LuaHelpers::CallHookRun(lua, 1, 0);
@@ -84,7 +84,7 @@ namespace detours {
 		{
 			auto* lua = interfaces::clientLua;
 
-			if (LuaHelpers::PushHookRun(lua, "PreFrameStageNotify" ) != 0) {
+			if (LuaHelpers::PushHookRun(lua, "PreFrameStageNotify") != 0) {
 				lua->PushNumber(stage);
 
 				LuaHelpers::CallHookRun(lua, 1, 0);
@@ -96,7 +96,7 @@ namespace detours {
 		{
 			auto* lua = interfaces::clientLua;
 
-			if (LuaHelpers::PushHookRun(lua, "PostFrameStageNotify" ) != 0) {
+			if (LuaHelpers::PushHookRun(lua, "PostFrameStageNotify") != 0) {
 				lua->PushNumber(stage);
 
 				LuaHelpers::CallHookRun(lua, 1, 0);
@@ -120,7 +120,7 @@ namespace detours {
 		{
 			auto* lua = interfaces::clientLua;
 
-			if (LuaHelpers::PushHookRun(lua, "PreRunCommand" ) != 0) {
+			if (LuaHelpers::PushHookRun(lua, "PreRunCommand") != 0) {
 				player->PushEntity();
 				lua->PushUserType(ucmd, Type::UserCmd);
 
@@ -133,7 +133,7 @@ namespace detours {
 		{
 			auto* lua = interfaces::clientLua;
 
-			if (LuaHelpers::PushHookRun(lua, "PostRunCommand" ) != 0) {
+			if (LuaHelpers::PushHookRun(lua, "PostRunCommand") != 0) {
 				player->PushEntity();
 				lua->PushUserType(ucmd, Type::UserCmd);
 
@@ -170,7 +170,7 @@ namespace detours {
 		{
 			auto* lua = interfaces::clientLua;
 
-			if (LuaHelpers::PushHookRun(lua, "PreDrawModelExecute" ) != 0) {
+			if (LuaHelpers::PushHookRun(lua, "PreDrawModelExecute") != 0) {
 				lua->PushString(interfaces::modelInfo->GetModelName(pInfo->pModel));
 				lua->PushNumber(pInfo->entity_index);
 				lua->PushNumber(pInfo->flags);
@@ -184,7 +184,7 @@ namespace detours {
 		{
 			auto* lua = interfaces::clientLua;
 
-			if (LuaHelpers::PushHookRun(lua, "PostDrawModelExecute" ) != 0) {
+			if (LuaHelpers::PushHookRun(lua, "PostDrawModelExecute") != 0) {
 				lua->PushString(interfaces::modelInfo->GetModelName(pInfo->pModel));
 				lua->PushNumber(pInfo->entity_index);
 				lua->PushNumber(pInfo->flags);
@@ -194,6 +194,14 @@ namespace detours {
 		}
 
 		dmeContext.in_hook = false;
+	}
+
+	// Shutdown 
+	using ShutdownFn = void(__fastcall*)(INetChannel* self, char const* reason);
+	ShutdownFn ShutdownOriginal = nullptr;
+
+	void __fastcall ShutdownHookFunc(INetChannel* self, char const* reason) {
+		ShutdownOriginal(self, globals::bCustomDisconnect ? globals::customDisconnect.c_str() : reason);
 	}
 
 	// SendNetMsg 
@@ -252,12 +260,11 @@ namespace detours {
 		{
 			auto* lua = interfaces::clientLua;
 
-			if (LuaHelpers::PushHookRun(lua, "SendNetMsg" ) != 0) {
+			if (LuaHelpers::PushHookRun(lua, "SendNetMsg") != 0) {
 				lua->PushString(msgName);
 
 				bool dontsend = false;
-				if (LuaHelpers::CallHookRun(lua, 1, 1))
-				{
+				if (LuaHelpers::CallHookRun(lua, 1, 1)) {
 					if (lua->IsType(-1, Type::Bool))
 						dontsend = lua->GetBool(-1);
 
@@ -296,10 +303,9 @@ namespace detours {
 		{
 			auto* lua = interfaces::clientLua;
 
-			if (LuaHelpers::PushHookRun(lua, "CL_Move" ) != 0) {
+			if (LuaHelpers::PushHookRun(lua, "CL_Move") != 0) {
 				bool dontcall = false;
-				if (LuaHelpers::CallHookRun(lua, 0, 1))
-				{
+				if (LuaHelpers::CallHookRun(lua, 0, 1)) {
 					if (lua->IsType(-1, Type::Bool))
 						dontcall = lua->GetBool(-1);
 
@@ -342,11 +348,10 @@ namespace detours {
 		{
 			auto* lua = interfaces::clientLua;
 
-			if (LuaHelpers::PushHookRun(lua, "ShouldUpdateAnimation" ) != 0) {
+			if (LuaHelpers::PushHookRun(lua, "ShouldUpdateAnimation") != 0) {
 				self->PushEntity();
 
-				if (LuaHelpers::CallHookRun(lua, 1, 2))
-				{
+				if (LuaHelpers::CallHookRun(lua, 1, 2)) {
 					if (lua->IsType(-1, Type::Number))
 						updateTicks = lua->GetNumber(-1);
 
@@ -373,6 +378,7 @@ namespace detours {
 		interfaces::globalVars->frametime = OldFrameTime;
 	}
 
+	// Dispatch effect 
 	void __fastcall EffectFunctionHookFunc(CEffectData& data, const char* effectName, ClientEffectCallback originalFunc) {
 		bool dontcall = false;
 		{
@@ -383,8 +389,7 @@ namespace detours {
 			if (LuaHelpers::PushHookRun(lua, hookName.c_str()) != 0) {
 				lua->PushUserType(&data, Type::EffectData);
 
-				if (LuaHelpers::CallHookRun(lua, 1, 1))
-				{
+				if (LuaHelpers::CallHookRun(lua, 1, 1)) {
 					if (lua->IsType(-1, Type::Bool))
 						dontcall = lua->GetBool(-1);
 
@@ -396,7 +401,6 @@ namespace detours {
 			originalFunc(data);
 	}
 
-	// Dispatch effect 
 	struct effect_hook_t {
 		CClientEffectRegistration* reg;
 		ClientEffectCallback orig;
@@ -445,8 +449,7 @@ namespace detours {
 	RecvVarProxyFn simTimeProxyFuncOriginal = nullptr;
 	RecvProp* simTimeRecvProp = nullptr;
 
-	void SimTimeProxyFunc(const CRecvProxyData* pData, void* pStruct, void* pOut)
-	{
+	void SimTimeProxyFunc(const CRecvProxyData* pData, void* pStruct, void* pOut) {
 		if (!pData->m_Value.m_Int)
 			return;
 
@@ -473,12 +476,23 @@ namespace detours {
 	}
 
 	void hook() {
-		auto SeqChangePattern = findPattern("client.dll", "48 85 D2 0F 84 ?? ?? ?? ?? 48 89 6C 24 ?? 48 89 74 24 ?? 48 89 7C 24");
-		auto CL_MovePattern = findPattern("engine.dll", "40 55 53 48 8D AC 24 ?? ?? ?? ?? B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 2B E0 0F 29 B4 24");
+		MH_Initialize();
 
 		INetChannel* netChan = interfaces::engineClient->GetNetChannel();
 		assert(netChan != nullptr);
+		void* ShutdownT = vmt::get<void*>(netChan, 36);
 		void* SendNetMsgT = vmt::get<void*>(netChan, 40);
+
+		MH_CreateHook(ShutdownT, (LPVOID)&ShutdownHookFunc, (LPVOID*)&ShutdownOriginal);
+		MH_CreateHook(SendNetMsgT, (LPVOID)&SendNetMsgHookFunc, (LPVOID*)&SendNetMsgOriginal);
+
+		auto SeqChangePattern = findPattern("client.dll", "48 85 D2 0F 84 ?? ?? ?? ?? 48 89 6C 24 ?? 48 89 74 24 ?? 48 89 7C 24");
+		auto CL_MovePattern = findPattern("engine.dll", "40 55 53 48 8D AC 24 ?? ?? ?? ?? B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 2B E0 0F 29 B4 24");
+
+		MH_CreateHook((LPVOID)SeqChangePattern, (LPVOID)&CheckForSequenceChangeHookFunc, (LPVOID*)&SeqChangeOriginal);
+		MH_CreateHook((LPVOID)CL_MovePattern, (LPVOID)&CLMoveHookFunc, (LPVOID*)&CLMoveOriginal);
+
+		MH_EnableHook(MH_ALL_HOOKS);
 
 		vmt::hook(interfaces::clientMode, &preCreateMoveOriginal, (const void*)ClientModeCreateMoveHookFunc, 21);
 		vmt::hook(interfaces::client, &postCreateMoveOriginal, (const void*)CreateMoveHookFuncNaked, 21);
@@ -489,16 +503,6 @@ namespace detours {
 
 		hookEffects();
 		hookSimTime();
-
-		if (MH_Initialize() == MH_OK)
-		{
-			MH_CreateHook(SendNetMsgT, (LPVOID)&SendNetMsgHookFunc, (LPVOID*)&SendNetMsgOriginal);
-
-			MH_CreateHook((LPVOID)SeqChangePattern, (LPVOID)&CheckForSequenceChangeHookFunc, (LPVOID*)&SeqChangeOriginal);
-			MH_CreateHook((LPVOID)CL_MovePattern, (LPVOID)&CLMoveHookFunc, (LPVOID*)&CLMoveOriginal);
-
-			MH_EnableHook(MH_ALL_HOOKS);
-		}
 	}
 
 	void postInit() {
@@ -519,6 +523,9 @@ namespace detours {
 	}
 
 	void unHook() {
+		unhookEffects();
+		simTimeRecvProp->m_ProxyFn = simTimeProxyFuncOriginal;
+
 		PreCreateMoveFn PreCreateMoveDummy = nullptr; 
 		PostCreateMoveFn PostCreateMoveDummy = nullptr;
 		FrameStageFn FrameStageDummy = nullptr;
@@ -532,9 +539,6 @@ namespace detours {
 		vmt::hook(interfaces::input, &GetUserCmdDummy, GetUserCmdOriginal, 8);
 		vmt::hook(interfaces::prediction, &RunCommandDummy, RunCommandOriginal, 17);
 		vmt::hook(interfaces::modelRender, &DrawModelDummy, DrawModelExecuteOriginal, 20);
-
-		unhookEffects();
-		simTimeRecvProp->m_ProxyFn = simTimeProxyFuncOriginal;
 
 		MH_DisableHook(MH_ALL_HOOKS);
 		MH_Uninitialize();

@@ -10,5 +10,8 @@ namespace globals {
 
 	bool		bLoopMove					= false;
 
+	bool		bCustomDisconnect			= false;	
+	std::string	customDisconnect			= "";
+
 	CBasePlayer* localPlayer				= nullptr;
 }

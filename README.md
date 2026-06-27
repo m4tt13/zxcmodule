@@ -71,8 +71,11 @@ SpoofConVar( string name ) -> boolean
 SpoofedConVarSetNumber( string name, number num ) -> boolean  
 SetCommandNumber( CUserCmd cmd, number num )  
 SetCommandTick( CUserCmd cmd, number tick )  
+GetTyping( CUserCmd cmd ) -> boolean  
 SetTyping( CUserCmd cmd, boolean typing )  
+GetContextMenu( CUserCmd cmd ) -> boolean  
 SetContextMenu( CUserCmd cmd, boolean enable )  
+GetContextVector( CUserCmd cmd ) -> Vector  
 SetContextVector( CUserCmd cmd, Vector normal )  
 GetRandomSeed( CUserCmd cmd ) -> number  
 SetRandomSeed( CUserCmd cmd, number seed )  
@@ -92,6 +95,7 @@ SetInterpolation( boolean interp )
 SetSequenceInterpolation( boolean interp )  
 EnableAnimFix( boolean fix )  
 LoopMove()  
+SetCustomDisconnect( string reason )  
 DrawModelExecute()  
 GetClipboardText() -> string  
 ExcludeFromCapture( boolean exclude )  
@@ -113,7 +117,7 @@ GetTargetLowerBodyYaw( Player ply ) -> number
 GetSimulationTime( Entity ent ) -> number  
 InvalidateBoneCache( Entity ent )  
 GetNetName() -> string  
-GetNetAdress() -> string  
+GetNetAddress() -> string  
 GetNetTime() -> number  
 GetNetTimeConnected() -> number  
 GetNetBufferSize() -> number  

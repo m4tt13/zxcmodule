@@ -297,6 +297,15 @@ LUA_FUNCTION(SetCommandTick) {
 	return 0;
 }
 
+LUA_FUNCTION(GetTyping) {
+	LUA->CheckType(1, Type::UserCmd);
+
+	CUserCmd* cmd = LUA->GetUserType<CUserCmd>(1, Type::UserCmd);
+	LUA->PushBool(cmd->istyping);
+
+	return 1;
+}
+
 LUA_FUNCTION(SetTyping) {
 	LUA->CheckType(1, Type::UserCmd);
 	LUA->CheckType(2, Type::Bool);
@@ -307,6 +316,15 @@ LUA_FUNCTION(SetTyping) {
 	return 0;
 }
 
+LUA_FUNCTION(GetContextMenu) {
+	LUA->CheckType(1, Type::UserCmd);
+
+	CUserCmd* cmd = LUA->GetUserType<CUserCmd>(1, Type::UserCmd);
+	LUA->PushBool(cmd->context_menu);
+
+	return 1;
+}
+
 LUA_FUNCTION(SetContextMenu) {
 	LUA->CheckType(1, Type::UserCmd);
 	LUA->CheckType(2, Type::Bool);
@@ -315,6 +333,15 @@ LUA_FUNCTION(SetContextMenu) {
 	cmd->context_menu = LUA->GetBool(2);
 
 	return 0;
+}
+
+LUA_FUNCTION(GetContextVector) {
+	LUA->CheckType(1, Type::UserCmd);
+
+	CUserCmd* cmd = LUA->GetUserType<CUserCmd>(1, Type::UserCmd);
+	LUA->PushVector(cmd->context_normal);
+
+	return 1;
 }
 
 LUA_FUNCTION(SetContextVector) {
@@ -517,6 +544,18 @@ LUA_FUNCTION_BSETTER(EnableAnimFix, globals::shouldFixAnimations);
 
 LUA_FUNCTION(LoopMove) {
 	globals::bLoopMove = true;
+
+	return 0;
+}
+
+LUA_FUNCTION(SetCustomDisconnect) {
+	if (LUA->IsType(1, Type::String)) {
+		globals::bCustomDisconnect = true;
+		globals::customDisconnect = LUA->GetString(1);
+	}
+	else {
+		globals::bCustomDisconnect = false;
+	}
 
 	return 0;
 }
@@ -876,7 +915,7 @@ LUA_FUNCTION(SetTimeout) {
 }
 
 LUA_FUNCTION_GETTER(GetNetName, String, interfaces::engineClient->GetNetChannel()->GetName())
-LUA_FUNCTION_GETTER(GetNetAdress, String, interfaces::engineClient->GetNetChannel()->GetAddress())
+LUA_FUNCTION_GETTER(GetNetAddress, String, interfaces::engineClient->GetNetChannel()->GetAddress())
 
 LUA_FUNCTION_GETTER(GetNetTime, Number, interfaces::engineClient->GetNetChannel()->GetTime())
 LUA_FUNCTION_GETTER(GetNetTimeConnected, Number, interfaces::engineClient->GetNetChannel()->GetTimeConnected())
@@ -903,8 +942,7 @@ LUA_FUNCTION(GetNetworkedVarInt) {
 	std::string key(LUA->GetString(2) + std::string("->") + LUA->GetString(3));
 	const auto& it = netvars::netvars.find(key);
 
-	if (it == netvars::netvars.end())
-	{
+	if (it == netvars::netvars.end()) {
 		LUA->PushNil();
 		return 1;
 	}
@@ -922,8 +960,7 @@ LUA_FUNCTION(GetNetworkedVarFloat) {
 	std::string key(LUA->GetString(2) + std::string("->") + LUA->GetString(3));
 	const auto& it = netvars::netvars.find(key);
 
-	if (it == netvars::netvars.end())
-	{
+	if (it == netvars::netvars.end()) {
 		LUA->PushNil();
 		return 1;
 	}
@@ -941,8 +978,7 @@ LUA_FUNCTION(GetNetworkedVarBool) {
 	std::string key(LUA->GetString(2) + std::string("->") + LUA->GetString(3));
 	const auto& it = netvars::netvars.find(key);
 
-	if (it == netvars::netvars.end())
-	{
+	if (it == netvars::netvars.end()) {
 		LUA->PushNil();
 		return 1;
 	}
@@ -960,8 +996,7 @@ LUA_FUNCTION(GetNetworkedVarString) {
 	std::string key(LUA->GetString(2) + std::string("->") + LUA->GetString(3));
 	const auto& it = netvars::netvars.find(key);
 
-	if (it == netvars::netvars.end())
-	{
+	if (it == netvars::netvars.end()) {
 		LUA->PushNil();
 		return 1;
 	}
@@ -979,8 +1014,7 @@ LUA_FUNCTION(GetNetworkedVarVector) {
 	std::string key(LUA->GetString(2) + std::string("->") + LUA->GetString(3));
 	const auto& it = netvars::netvars.find(key);
 
-	if (it == netvars::netvars.end())
-	{
+	if (it == netvars::netvars.end()) {
 		LUA->PushNil();
 		return 1;
 	}
@@ -998,8 +1032,7 @@ LUA_FUNCTION(GetNetworkedVarAngle) {
 	std::string key(LUA->GetString(2) + std::string("->") + LUA->GetString(3));
 	const auto& it = netvars::netvars.find(key);
 
-	if (it == netvars::netvars.end())
-	{
+	if (it == netvars::netvars.end()) {
 		LUA->PushNil();
 		return 1;
 	}
@@ -1017,20 +1050,17 @@ LUA_FUNCTION(GetNetworkedVarEntity) {
 	std::string key(LUA->GetString(2) + std::string("->") + LUA->GetString(3));
 	const auto& it = netvars::netvars.find(key);
 
-	if (it == netvars::netvars.end())
-	{
+	if (it == netvars::netvars.end()) {
 		LUA->PushNil();
 		return 1;
 	}
 
 	CBaseEntity* ent = interfaces::entityList->GetClientEntityFromHandle(*reinterpret_cast<CBaseHandle*>(reinterpret_cast<std::uintptr_t>(Ent) + it->second));
 
-	if (ent)
-	{
+	if (ent) {
 		ent->PushEntity();
 	}
-	else
-	{
+	else {
 		LUA->PushSpecial(SPECIAL_GLOB);
 		LUA->GetField(-1, "NULL");
 		LUA->Remove(-2);
@@ -1052,8 +1082,7 @@ LUA_FUNCTION(InvalidateBoneCache) {
 
 	CBaseAnimating *Anim = Ent->GetBaseAnimating();
 
-	if (Anim)
-	{
+	if (Anim) {
 		using Studio_GetBoneCacheFn = void*(__fastcall*)(void*);
 		static Studio_GetBoneCacheFn Studio_GetBoneCache = (Studio_GetBoneCacheFn)findPattern("client.dll", "48 89 5C 24 ?? 57 48 83 EC ?? 48 8B F9 FF 15 ?? ?? ?? ?? 8B 15 ?? ?? ?? ?? 48 8B D8 3B C2 74 ?? 45 33 C0 48 8D 0D ?? ?? ?? ?? 8B D3 FF 15 ?? ?? ?? ?? 84 C0 75 ?? F3 90 45 33 C0 48 8D 0D ?? ?? ?? ?? 8B D3 FF 15 ?? ?? ?? ?? EB ?? 90 8B 05 ?? ?? ?? ?? FF C0 89 05 ?? ?? ?? ?? 48 8B D7 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 8B 15");
 
@@ -1221,8 +1250,11 @@ GMOD_MODULE_OPEN() {
 
 		PushApiFunction("SetCommandNumber", SetCommandNumber);
 		PushApiFunction("SetCommandTick", SetCommandTick);
+		PushApiFunction("GetTyping", GetTyping);
 		PushApiFunction("SetTyping", SetTyping);
+		PushApiFunction("GetContextMenu", GetContextMenu);
 		PushApiFunction("SetContextMenu", SetContextMenu);
+		PushApiFunction("GetContextVector", GetContextVector);
 		PushApiFunction("SetContextVector", SetContextVector);
 		PushApiFunction("GetRandomSeed", GetRandomSeed);
 		PushApiFunction("SetRandomSeed", SetRandomSeed);
@@ -1245,6 +1277,7 @@ GMOD_MODULE_OPEN() {
 		PushApiFunction("SetSequenceInterpolation", SetSequenceInterpolation);
 		PushApiFunction("EnableAnimFix", EnableAnimFix);
 		PushApiFunction("LoopMove", LoopMove);
+		PushApiFunction("SetCustomDisconnect", SetCustomDisconnect);
 		PushApiFunction("DrawModelExecute", DrawModelExecute);
 
 		PushApiFunction("GetClipboardText", GetClipboardText);
@@ -1272,7 +1305,7 @@ GMOD_MODULE_OPEN() {
 		PushApiFunction("InvalidateBoneCache", InvalidateBoneCache);
 
 		PushApiFunction("GetNetName", GetNetName);
-		PushApiFunction("GetNetAdress", GetNetAdress);
+		PushApiFunction("GetNetAddress", GetNetAddress);
 		PushApiFunction("GetNetTime", GetNetTime);
 		PushApiFunction("GetNetTimeConnected", GetNetTimeConnected);
 		PushApiFunction("GetNetBufferSize", GetNetBufferSize);

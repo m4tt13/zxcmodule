@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <string>
+
 class CBasePlayer;
 
 namespace globals {
@@ -11,6 +13,9 @@ namespace globals {
 	extern bool			shouldFixAnimations;
 
 	extern bool			bLoopMove;
+
+	extern bool			bCustomDisconnect;	
+	extern std::string	customDisconnect;
 
 	extern CBasePlayer* localPlayer;
 }
