@@ -121,14 +121,14 @@ LUA_FUNCTION(GetGameDirectory) {
 
 LUA_FUNCTION(WorldToScreenMatrix) {
 	VMatrix mat = interfaces::engineClient->WorldToScreenMatrix();
-	LUA->PushUserType(&mat, Type::Matrix);
+	LUA->PushUserType_Value(mat, Type::Matrix);
 
 	return 1;
 }
 
 LUA_FUNCTION(WorldToViewMatrix) {
 	VMatrix mat = interfaces::engineClient->WorldToViewMatrix();
-	LUA->PushUserType(&mat, Type::Matrix);
+	LUA->PushUserType_Value(mat, Type::Matrix);
 
 	return 1;
 }
