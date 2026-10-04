@@ -161,8 +161,8 @@ GetOutReliableState() -> number
 SetOutReliableState( number val )  
 GetInReliableState() -> number  
 SetInReliableState( number val )  
-GetChokedPackets( number val )  
-SetChokedPackets() -> number  
+GetChokedPackets() -> number  
+SetChokedPackets( number val )  
 GetPacketDrop() -> number  
 SetPacketDrop( number val )  
 GetNetworkedVarInt( Entity ent, string table, string var ) -> number  
