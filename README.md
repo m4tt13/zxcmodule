@@ -129,7 +129,7 @@ SetFileTransmissionMode( boolean transmission )
 SetCompressionMode( boolean compression )  
 RequestFile( number type, number crc ) -> number  
 SetMaxBufferSize( boolean reliable, number bytes, boolean voice = false )  
-GetNumBitsWritten( boolean reliable )  
+GetNumBitsWritten( boolean reliable ) -> number  
 SetNetInterpolationAmount( number val )  
 SetRemoteFramerate( number frametime, number std_deviation )  
 SetMaxRoutablePayloadSize( number val )  
