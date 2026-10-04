@@ -16,6 +16,4 @@ namespace globals {
 
 	extern bool			bCustomDisconnect;	
 	extern std::string	customDisconnect;
-
-	extern CBasePlayer* localPlayer;
 }

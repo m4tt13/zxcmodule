@@ -45,9 +45,8 @@ std::vector<std::unique_ptr<SpoofedConVar>> spoofedConVars;
 // Engine client 
 LUA_FUNCTION(ServerCmd) {
 	LUA->CheckString(1);
-	LUA->CheckType(2, Type::Bool);
 
-	interfaces::engineClient->ServerCmd(LUA->GetString(1), LUA->GetBool(2));
+	interfaces::engineClient->ServerCmd(LUA->GetString(1), LUA->IsType(2, Type::Bool) ? LUA->GetBool(2) : true);
 
 	return 0;
 }
@@ -58,6 +57,24 @@ LUA_FUNCTION(ClientCmd) {
 	interfaces::engineClient->ClientCmd(LUA->GetString(1));
 
 	return 0;
+}
+
+LUA_FUNCTION(GetLocalPlayer) {
+	LUA->PushNumber(interfaces::engineClient->GetLocalPlayer());
+
+	return 1;
+}
+
+LUA_FUNCTION(GetTime) {
+	LUA->PushNumber(interfaces::engineClient->Time());
+
+	return 1;
+}
+
+LUA_FUNCTION(GetLastTimeStamp) {
+	LUA->PushNumber(interfaces::engineClient->GetLastTimeStamp());
+
+	return 1;
 }
 
 LUA_FUNCTION(GetViewAngles) {
@@ -78,18 +95,57 @@ LUA_FUNCTION(SetViewAngles) {
 	return 0;
 }
 
+LUA_FUNCTION(IsBoxVisible) {
+	LUA->CheckType(1, Type::Vector);
+	LUA->CheckType(2, Type::Vector);
+
+	LUA->PushBool(interfaces::engineClient->IsBoxVisible(LUA->GetVector(1), LUA->GetVector(2)));
+
+	return 1;
+}
+
+LUA_FUNCTION(IsBoxInViewCluster) {
+	LUA->CheckType(1, Type::Vector);
+	LUA->CheckType(2, Type::Vector);
+
+	LUA->PushBool(interfaces::engineClient->IsBoxInViewCluster(LUA->GetVector(1), LUA->GetVector(2)));
+
+	return 1;
+}
+
+LUA_FUNCTION(GetGameDirectory) {
+	LUA->PushString(interfaces::engineClient->GetGameDirectory());
+
+	return 1;
+}
+
+LUA_FUNCTION(WorldToScreenMatrix) {
+	VMatrix mat = interfaces::engineClient->WorldToScreenMatrix();
+	LUA->PushUserType(&mat, Type::Matrix);
+
+	return 1;
+}
+
+LUA_FUNCTION(WorldToViewMatrix) {
+	VMatrix mat = interfaces::engineClient->WorldToViewMatrix();
+	LUA->PushUserType(&mat, Type::Matrix);
+
+	return 1;
+}
+
+LUA_FUNCTION(IsOccluded) {
+	LUA->CheckType(1, Type::Vector);
+	LUA->CheckType(2, Type::Vector);
+
+	LUA->PushBool(interfaces::engineClient->IsOccluded(LUA->GetVector(1), LUA->GetVector(2)));
+
+	return 1;
+}
+
 LUA_FUNCTION(ExecuteClientCmd) {
 	LUA->CheckString(1);
 
 	interfaces::engineClient->ExecuteClientCmd(LUA->GetString(1));
-
-	return 0;
-}
-
-LUA_FUNCTION(RawClientCmdUnrestricted) {
-	LUA->CheckString(1);
-
-	interfaces::engineClient->GMOD_RawClientCmd_Unrestricted(LUA->GetString(1));
 
 	return 0;
 }
@@ -118,62 +174,19 @@ LUA_FUNCTION(SetRestrictClientCommands) {
 	return 0;
 }
 
-LUA_FUNCTION(GetGameDirectory) {
-	LUA->PushString(interfaces::engineClient->GetGameDirectory());
+LUA_FUNCTION(RawClientCmdUnrestricted) {
+	LUA->CheckString(1);
 
-	return 1;
-}
+	interfaces::engineClient->GMOD_RawClientCmd_Unrestricted(LUA->GetString(1));
 
-LUA_FUNCTION(GetLocalPlayer) {
-	LUA->PushNumber(interfaces::engineClient->GetLocalPlayer());
-
-	return 1;
-}
-
-LUA_FUNCTION(GetTime) {
-	LUA->PushNumber(interfaces::engineClient->Time());
-
-	return 1;
-}
-
-LUA_FUNCTION(GetLastTimeStamp) {
-	LUA->PushNumber(interfaces::engineClient->GetLastTimeStamp());
-
-	return 1;
-}
-
-LUA_FUNCTION(IsBoxVisible) {
-	LUA->CheckType(1, Type::Vector);
-	LUA->CheckType(2, Type::Vector);
-
-	LUA->PushBool(interfaces::engineClient->IsBoxVisible(LUA->GetVector(1), LUA->GetVector(2)));
-
-	return 1;
-}
-
-LUA_FUNCTION(IsBoxInViewCluster) {
-	LUA->CheckType(1, Type::Vector);
-	LUA->CheckType(2, Type::Vector);
-
-	LUA->PushBool(interfaces::engineClient->IsBoxInViewCluster(LUA->GetVector(1), LUA->GetVector(2)));
-
-	return 1;
-}
-
-LUA_FUNCTION(IsOccluded) {
-	LUA->CheckType(1, Type::Vector);
-	LUA->CheckType(2, Type::Vector);
-
-	LUA->PushBool(interfaces::engineClient->IsOccluded(LUA->GetVector(1), LUA->GetVector(2)));
-
-	return 1;
+	return 0;
 }
 
 // ClientState
-LUA_FUNCTION_GETSET(LastCommandAck, Number, interfaces::clientState->last_command_ack);
+LUA_FUNCTION_GETTER(GetPreviousTick, Number, interfaces::clientState->oldtickcount);
 LUA_FUNCTION_GETSET(LastOutgoingCommand, Number, interfaces::clientState->lastoutgoingcommand);
 LUA_FUNCTION_GETSET(ChokedCommands, Number, interfaces::clientState->chokedcommands);
-LUA_FUNCTION_GETTER(GetPreviousTick, Number, interfaces::clientState->oldtickcount);
+LUA_FUNCTION_GETSET(LastCommandAck, Number, interfaces::clientState->last_command_ack);
 
 LUA_FUNCTION(GetInterpolationTime) {
 	using GetInterpolationTimeFn = float(__fastcall*)();
@@ -185,12 +198,12 @@ LUA_FUNCTION(GetInterpolationTime) {
 }
 
 // GlobalVars 
-LUA_FUNCTION_GETSET(CurTime, Number, interfaces::globalVars->curtime);
-LUA_FUNCTION_GETSET(FrameTime, Number, interfaces::globalVars->frametime);
 LUA_FUNCTION_GETSET(RealTime, Number, interfaces::globalVars->realtime);
 LUA_FUNCTION_GETSET(FrameCount, Number, interfaces::globalVars->framecount);
 LUA_FUNCTION_GETSET(AbsFrameTime, Number, interfaces::globalVars->absoluteframetime);
-LUA_FUNCTION_GETSET(InterpoloationAmount, Number, interfaces::globalVars->interpolation_amount);
+LUA_FUNCTION_GETSET(CurTime, Number, interfaces::globalVars->curtime);
+LUA_FUNCTION_GETSET(FrameTime, Number, interfaces::globalVars->frametime);
+LUA_FUNCTION_GETSET(InterpolationAmount, Number, interfaces::globalVars->interpolation_amount);
 
 // ConVar 
 LUA_FUNCTION(ConVarSetValue) {
@@ -297,6 +310,25 @@ LUA_FUNCTION(SetCommandTick) {
 	return 0;
 }
 
+LUA_FUNCTION(GetRandomSeed) {
+	LUA->CheckType(1, Type::UserCmd);
+
+	CUserCmd* cmd = LUA->GetUserType<CUserCmd>(1, Type::UserCmd);
+	LUA->PushNumber(cmd->random_seed);
+
+	return 1;
+}
+
+LUA_FUNCTION(SetRandomSeed) {
+	LUA->CheckType(1, Type::UserCmd);
+	LUA->CheckNumber(2);
+
+	CUserCmd* cmd = LUA->GetUserType<CUserCmd>(1, Type::UserCmd);
+	cmd->random_seed = LUA->GetNumber(2);
+
+	return 0;
+}
+
 LUA_FUNCTION(GetTyping) {
 	LUA->CheckType(1, Type::UserCmd);
 
@@ -350,25 +382,6 @@ LUA_FUNCTION(SetContextVector) {
 
 	CUserCmd* cmd = LUA->GetUserType<CUserCmd>(1, Type::UserCmd);
 	cmd->context_normal = LUA->GetVector(2);
-
-	return 0;
-}
-
-LUA_FUNCTION(GetRandomSeed) {
-	LUA->CheckType(1, Type::UserCmd);
-
-	CUserCmd* cmd = LUA->GetUserType<CUserCmd>(1, Type::UserCmd);
-	LUA->PushNumber(cmd->random_seed);
-
-	return 1;
-}
-
-LUA_FUNCTION(SetRandomSeed) {
-	LUA->CheckType(1, Type::UserCmd);
-	LUA->CheckNumber(2);
-
-	CUserCmd* cmd = LUA->GetUserType<CUserCmd>(1, Type::UserCmd);
-	cmd->random_seed = LUA->GetNumber(2);
 
 	return 0;
 }
@@ -675,39 +688,43 @@ LUA_FUNCTION(NetSetConVar) {
 
 	const char* conVar = LUA->GetString(1);
 	const char* value = LUA->GetString(2);
+	bool reliable = LUA->IsType(3, Type::Bool) ? LUA->GetBool(3) : true;
 
 	INetChannel* netChan = interfaces::engineClient->GetNetChannel();
 
 	uint8_t msgBuf[1024];
 	NetMessageWriteable netMsg(NetMessage::net_SetConVar, msgBuf, sizeof(msgBuf));
+	netMsg.SetReliable(reliable);
 	netMsg.write.WriteUInt(static_cast<uint32_t>(NetMessage::net_SetConVar), NET_MESSAGE_BITS);
 	netMsg.write.WriteByte(1);
 	netMsg.write.WriteString(conVar);
 	netMsg.write.WriteString(value);
 
-	netChan->SendNetMsg(&netMsg, true);
+	netChan->SendNetMsg(netMsg, reliable);
 
 	return 0;
 }
 
-LUA_FUNCTION(NetSetConVarUnreliable) {
-	LUA->CheckString(1);
-	LUA->CheckString(2);
+LUA_FUNCTION(SendAchievement) {
+	LUA->CheckNumber(1);
 
-	const char* conVar = LUA->GetString(1);
-	const char* value = LUA->GetString(2);
+	static unsigned char payload_bytes[] = { 
+			0x00, 0x41, 0x63, 0x68, 0x69, 0x65, 0x76, 0x65, 0x6d, 0x65, 
+			0x6e, 0x74, 0x45, 0x61, 0x72, 0x6e, 0x65, 0x64, 0x00, 0x02, 
+			0x61, 0x63, 0x68, 0x69, 0x65, 0x76, 0x65, 0x6d, 0x65, 0x6e, 
+			0x74, 0x49, 0x44, 0x00, 0x44, 0x33, 0x22, 0x11, 0x08, 0x08 };
+
+	*(int*)(payload_bytes + 34) = LUA->GetNumber(1);
 
 	INetChannel* netChan = interfaces::engineClient->GetNetChannel();
 
 	uint8_t msgBuf[1024];
-	NetMessageWriteable netMsg(NetMessage::net_SetConVar, msgBuf, sizeof(msgBuf));
-	netMsg.SetReliable(false);
-	netMsg.write.WriteUInt(static_cast<uint32_t>(NetMessage::net_SetConVar), NET_MESSAGE_BITS);
-	netMsg.write.WriteByte(1);
-	netMsg.write.WriteString(conVar);
-	netMsg.write.WriteString(value);
+	NetMessageWriteable netMsg(NetMessage::clc_CmdKeyValues, msgBuf, sizeof(msgBuf));
+	netMsg.write.WriteUInt(static_cast<uint32_t>(NetMessage::clc_CmdKeyValues), NET_MESSAGE_BITS);
+	netMsg.write.WriteLong(sizeof(payload_bytes));
+	netMsg.write.WriteBits(payload_bytes, sizeof(payload_bytes) * 8);
 
-	netChan->SendNetMsg(&netMsg, false);
+	netChan->SendNetMsg(netMsg);
 
 	return 0;
 }
@@ -720,37 +737,13 @@ LUA_FUNCTION(NetDisconnect) {
 	INetChannel* netChan = interfaces::engineClient->GetNetChannel();
 
 	uint8_t msgBuf[1024];
-	 
 	NetMessageWriteable netMsg(NetMessage::net_Disconnect, msgBuf, sizeof(msgBuf));
 	netMsg.write.WriteUInt(static_cast<uint32_t>(NetMessage::net_Disconnect), NET_MESSAGE_BITS);
 	netMsg.write.WriteString(str);
 
-	netChan->SendNetMsg(&netMsg, true);
+	netChan->SendNetMsg(netMsg);
 
 	return 0;
-}
-
-LUA_FUNCTION(RequestFile) {
-	LUA->CheckNumber(1);
-	LUA->CheckNumber(2);
-
-	INetChannel* netChan = interfaces::engineClient->GetNetChannel();
-
-	LUA->PushNumber(netChan->RequestFile(LUA->GetNumber(1), LUA->GetNumber(2)));
-
-	return 1;
-} 
-
-LUA_FUNCTION(SendFile) {
-	LUA->CheckString(1);
-	LUA->CheckNumber(2);
-
-	const char* str = LUA->GetString(1);
-	INetChannel* netChan = interfaces::engineClient->GetNetChannel();
-
-	LUA->PushBool(netChan->SendFile(str, LUA->GetNumber(2)));
-
-	return 1;
 }
 
 LUA_FUNCTION(GetLatency) {
@@ -813,7 +806,7 @@ LUA_FUNCTION(GetTotalData) {
 	return 1;
 } 
 
-LUA_FUNCTION(GetSequenceNrFlow) {
+LUA_FUNCTION(GetSequenceNr) {
 	LUA->CheckNumber(1);
 
 	LUA->PushNumber(interfaces::engineClient->GetNetChannel()->GetSequenceNr(LUA->GetNumber(1)));
@@ -849,10 +842,62 @@ LUA_FUNCTION(GetPacketBytes) {
 	return 1;
 }
 
+LUA_FUNCTION(GetStreamProgress) {
+	LUA->CheckNumber(1);
+
+	int total, received;
+	interfaces::engineClient->GetNetChannel()->GetStreamProgress(LUA->GetNumber(1), &total, &received);
+
+	LUA->PushNumber(total);
+	LUA->PushNumber(received);
+
+	return 2;
+}
+
+LUA_FUNCTION(GetCommandInterpolationAmount) {
+	LUA->CheckNumber(1);
+	LUA->CheckNumber(2);
+
+	LUA->PushNumber(interfaces::engineClient->GetNetChannel()->GetCommandInterpolationAmount(LUA->GetNumber(1), LUA->GetNumber(2)));
+
+	return 1;
+}
+
+LUA_FUNCTION(GetPacketResponseLatency) {
+	LUA->CheckNumber(1);
+	LUA->CheckNumber(2);
+
+	int latency, choke;
+	interfaces::engineClient->GetNetChannel()->GetPacketResponseLatency(LUA->GetNumber(1), LUA->GetNumber(2), &latency, &choke);
+
+	LUA->PushNumber(latency);
+	LUA->PushNumber(choke);
+
+	return 2;
+}
+
+LUA_FUNCTION(GetRemoteFramerate) {
+	float frameTime, stdDeviation;
+	interfaces::engineClient->GetNetChannel()->GetRemoteFramerate(&frameTime, &stdDeviation);
+
+	LUA->PushNumber(frameTime);
+	LUA->PushNumber(stdDeviation);
+
+	return 2;
+}
+
 LUA_FUNCTION(SetDataRate) {
 	LUA->CheckNumber(1);
 
 	interfaces::engineClient->GetNetChannel()->SetDataRate(LUA->GetNumber(1));
+
+	return 0;
+}
+
+LUA_FUNCTION(SetTimeout) {
+	LUA->CheckNumber(1);
+
+	interfaces::engineClient->GetNetChannel()->SetTimeout(LUA->GetNumber(1));
 
 	return 0;
 }
@@ -865,6 +910,42 @@ LUA_FUNCTION(SetChallengeNr) {
 	return 0;
 }
 
+LUA_FUNCTION(NetShutdown) {
+	LUA->CheckString(1);
+
+	interfaces::engineClient->GetNetChannel()->Shutdown(LUA->GetString(1));
+
+	return 0;
+}
+
+LUA_FUNCTION(SendFile) {
+	LUA->CheckString(1);
+	LUA->CheckNumber(2);
+
+	const char* str = LUA->GetString(1);
+	INetChannel* netChan = interfaces::engineClient->GetNetChannel();
+
+	LUA->PushBool(netChan->SendFile(str, LUA->GetNumber(2)));
+
+	return 1;
+}
+
+LUA_FUNCTION(Transmit) {
+	INetChannel* netChan = interfaces::engineClient->GetNetChannel();
+
+	LUA->PushBool(netChan->Transmit(LUA->IsType(1, Type::Bool) ? LUA->GetBool(1) : false));
+
+	return 1;
+}
+
+LUA_FUNCTION(SetFileTransmissionMode) {
+	LUA->CheckType(1, Type::Bool);
+
+	interfaces::engineClient->GetNetChannel()->SetFileTransmissionMode(LUA->GetBool(1));
+
+	return 0;
+}
+
 LUA_FUNCTION(SetCompressionMode) {
 	LUA->CheckType(1, Type::Bool);
 
@@ -873,7 +954,35 @@ LUA_FUNCTION(SetCompressionMode) {
 	return 0;
 }
 
-LUA_FUNCTION(SetInterpolationAmount) {
+LUA_FUNCTION(RequestFile) {
+	LUA->CheckNumber(1);
+	LUA->CheckNumber(2);
+
+	INetChannel* netChan = interfaces::engineClient->GetNetChannel();
+
+	LUA->PushNumber(netChan->RequestFile(LUA->GetNumber(1), LUA->GetNumber(2)));
+
+	return 1;
+} 
+
+LUA_FUNCTION(SetMaxBufferSize) {
+	LUA->CheckType(1, Type::Bool);
+	LUA->CheckNumber(2);
+
+	interfaces::engineClient->GetNetChannel()->SetMaxBufferSize(LUA->GetBool(1), LUA->GetNumber(2), LUA->IsType(3, Type::Bool) ? LUA->GetBool(3) : false);
+
+	return 0;
+}
+
+LUA_FUNCTION(GetNumBitsWritten) {
+	LUA->CheckType(1, Type::Bool);
+
+	LUA->PushNumber(interfaces::engineClient->GetNetChannel()->GetNumBitsWritten(LUA->GetBool(1)));
+
+	return 1;
+}
+
+LUA_FUNCTION(SetNetInterpolationAmount) {
 	LUA->CheckNumber(1);
 
 	interfaces::engineClient->GetNetChannel()->SetInterpolationAmount(LUA->GetNumber(1));
@@ -898,40 +1007,32 @@ LUA_FUNCTION(SetMaxRoutablePayloadSize) {
 	return 0;
 }
 
-LUA_FUNCTION(NetShutdownStr) {
-	LUA->CheckString(1);
-
-	interfaces::engineClient->GetNetChannel()->Shutdown(LUA->GetString(1));
-
-	return 0;
-}
-
-LUA_FUNCTION(SetTimeout) {
-	LUA->CheckNumber(1);
-
-	interfaces::engineClient->GetNetChannel()->SetTimeout(LUA->GetNumber(1));
-
-	return 0;
-}
-
 LUA_FUNCTION_GETTER(GetNetName, String, interfaces::engineClient->GetNetChannel()->GetName())
 LUA_FUNCTION_GETTER(GetNetAddress, String, interfaces::engineClient->GetNetChannel()->GetAddress())
-
 LUA_FUNCTION_GETTER(GetNetTime, Number, interfaces::engineClient->GetNetChannel()->GetTime())
-LUA_FUNCTION_GETTER(GetNetTimeConnected, Number, interfaces::engineClient->GetNetChannel()->GetTimeConnected())
-LUA_FUNCTION_GETTER(GetNetBufferSize, Number, interfaces::engineClient->GetNetChannel()->GetBufferSize())
-LUA_FUNCTION_GETTER(GetNetDataRate, Number, interfaces::engineClient->GetNetChannel()->GetDataRate())
-
-LUA_FUNCTION_GETTER(GetIsLoopback, Bool, interfaces::engineClient->GetNetChannel()->IsLoopback())
-LUA_FUNCTION_GETTER(GetIsTimingOut, Bool, interfaces::engineClient->GetNetChannel()->IsTimingOut())
+LUA_FUNCTION_GETTER(GetTimeConnected, Number, interfaces::engineClient->GetNetChannel()->GetTimeConnected())
+LUA_FUNCTION_GETTER(GetBufferSize, Number, interfaces::engineClient->GetNetChannel()->GetBufferSize())
+LUA_FUNCTION_GETTER(GetDataRate, Number, interfaces::engineClient->GetNetChannel()->GetDataRate())
+LUA_FUNCTION_GETTER(IsLoopback, Bool, interfaces::engineClient->GetNetChannel()->IsLoopback())
+LUA_FUNCTION_GETTER(IsTimingOut, Bool, interfaces::engineClient->GetNetChannel()->IsTimingOut())
+LUA_FUNCTION_GETTER(IsPlayback, Bool, interfaces::engineClient->GetNetChannel()->IsPlayback())
+LUA_FUNCTION_GETTER(GetTimeSinceLastReceived, Number, interfaces::engineClient->GetNetChannel()->GetTimeSinceLastReceived())
+LUA_FUNCTION_GETTER(GetTimeoutSeconds, Number, interfaces::engineClient->GetNetChannel()->GetTimeoutSeconds())
+LUA_FUNCTION_GETTER(GetChallengeNr, Number, interfaces::engineClient->GetNetChannel()->GetChallengeNr())
+LUA_FUNCTION_GETTER(CanPacket, Bool, interfaces::engineClient->GetNetChannel()->CanPacket())
+LUA_FUNCTION_GETTER(IsOverflowed, Bool, interfaces::engineClient->GetNetChannel()->IsOverflowed())
+LUA_FUNCTION_GETTER(IsTimedOut, Bool, interfaces::engineClient->GetNetChannel()->IsTimedOut())
+LUA_FUNCTION_GETTER(HasPendingReliableData, Bool, interfaces::engineClient->GetNetChannel()->HasPendingReliableData())
+LUA_FUNCTION_GETTER(IsNull, Bool, interfaces::engineClient->GetNetChannel()->IsNull())
+LUA_FUNCTION_GETTER(GetMaxRoutablePayloadSize, Number, interfaces::engineClient->GetNetChannel()->GetMaxRoutablePayloadSize())
 
 LUA_FUNCTION_GETSET(OutSequenceNr, Number, interfaces::engineClient->GetNetChannel()->m_nOutSequenceNr);
 LUA_FUNCTION_GETSET(InSequenceNr, Number, interfaces::engineClient->GetNetChannel()->m_nInSequenceNr);
 LUA_FUNCTION_GETSET(OutSequenceNrAck, Number, interfaces::engineClient->GetNetChannel()->m_nOutSequenceNrAck);
-LUA_FUNCTION_GETSET(NetChokedPackets, Number, interfaces::engineClient->GetNetChannel()->m_nChokedPackets);
-LUA_FUNCTION_GETSET(PacketDrop, Number, interfaces::engineClient->GetNetChannel()->m_PacketDrop);
 LUA_FUNCTION_GETSET(OutReliableState, Number, interfaces::engineClient->GetNetChannel()->m_nOutReliableState);
 LUA_FUNCTION_GETSET(InReliableState, Number, interfaces::engineClient->GetNetChannel()->m_nInReliableState);
+LUA_FUNCTION_GETSET(ChokedPackets, Number, interfaces::engineClient->GetNetChannel()->m_nChokedPackets);
+LUA_FUNCTION_GETSET(PacketDrop, Number, interfaces::engineClient->GetNetChannel()->m_PacketDrop);
 
 // Entity 
 LUA_FUNCTION(GetNetworkedVarInt) {
@@ -1206,42 +1307,44 @@ GMOD_MODULE_OPEN() {
 	LUA->CreateTable();
 		PushApiFunction("ServerCmd", ServerCmd);
 		PushApiFunction("ClientCmd", ClientCmd);
-		PushApiFunction("GetViewAngles", GetViewAngles);
-		PushApiFunction("SetViewAngles", SetViewAngles);
-		PushApiFunction("ExecuteClientCmd", ExecuteClientCmd);
-		PushApiFunction("RawClientCmdUnrestricted", RawClientCmdUnrestricted);
-		PushApiFunction("ClientCmdUnrestricted", ClientCmdUnrestricted);
-		PushApiFunction("SetRestrictServerCommands", SetRestrictServerCommands);
-		PushApiFunction("SetRestrictClientCommands", SetRestrictClientCommands);
-		PushApiFunction("GetGameDirectory", GetGameDirectory);
 		PushApiFunction("GetLocalPlayer", GetLocalPlayer);
 		PushApiFunction("GetTime", GetTime);
 		PushApiFunction("GetLastTimeStamp", GetLastTimeStamp);
+		PushApiFunction("GetViewAngles", GetViewAngles);
+		PushApiFunction("SetViewAngles", SetViewAngles);
 		PushApiFunction("IsBoxVisible", IsBoxVisible);
 		PushApiFunction("IsBoxInViewCluster", IsBoxInViewCluster);
+		PushApiFunction("GetGameDirectory", GetGameDirectory);
+		PushApiFunction("WorldToScreenMatrix", WorldToScreenMatrix);
+		PushApiFunction("WorldToViewMatrix", WorldToViewMatrix);
 		PushApiFunction("IsOccluded", IsOccluded);
+		PushApiFunction("ExecuteClientCmd", ExecuteClientCmd);
+		PushApiFunction("ClientCmdUnrestricted", ClientCmdUnrestricted);
+		PushApiFunction("SetRestrictServerCommands", SetRestrictServerCommands);
+		PushApiFunction("SetRestrictClientCommands", SetRestrictClientCommands);
+		PushApiFunction("RawClientCmdUnrestricted", RawClientCmdUnrestricted);
 
-		PushApiFunction("GetLastCommandAck", GetLastCommandAck);
-		PushApiFunction("SetLastCommandAck", SetLastCommandAck);
+		PushApiFunction("GetPreviousTick", GetPreviousTick);
 		PushApiFunction("GetLastOutgoingCommand", GetLastOutgoingCommand);
 		PushApiFunction("SetLastOutgoingCommand", SetLastOutgoingCommand);
 		PushApiFunction("GetChokedCommands", GetChokedCommands);
 		PushApiFunction("SetChokedCommands", SetChokedCommands);
-		PushApiFunction("GetPreviousTick", GetPreviousTick);
+		PushApiFunction("GetLastCommandAck", GetLastCommandAck);
+		PushApiFunction("SetLastCommandAck", SetLastCommandAck);
 		PushApiFunction("GetInterpolationTime", GetInterpolationTime);
 
-		PushApiFunction("GetCurTime", GetCurTime);
-		PushApiFunction("SetCurTime", SetCurTime);
-		PushApiFunction("GetFrameTime", GetFrameTime);
-		PushApiFunction("SetFrameTime", SetFrameTime);
 		PushApiFunction("GetRealTime", GetRealTime);
 		PushApiFunction("SetRealTime", SetRealTime);
-		PushApiFunction("GetFrameCount", GetFrameCount);
-		PushApiFunction("SetFrameCount", SetFrameCount);
+		PushApiFunction("GetFrameTime", GetFrameTime);
+		PushApiFunction("SetFrameTime", SetFrameTime);
 		PushApiFunction("GetAbsFrameTime", GetAbsFrameTime);
 		PushApiFunction("SetAbsFrameTime", SetAbsFrameTime);
-		PushApiFunction("GetInterpoloationAmount", GetInterpoloationAmount);
-		PushApiFunction("SetInterpoloationAmount", SetInterpoloationAmount);
+		PushApiFunction("GetCurTime", GetCurTime);
+		PushApiFunction("SetCurTime", SetCurTime);
+		PushApiFunction("GetFrameCount", GetFrameCount);
+		PushApiFunction("SetFrameCount", SetFrameCount);
+		PushApiFunction("GetInterpolationAmount", GetInterpolationAmount);
+		PushApiFunction("SetInterpolationAmount", SetInterpolationAmount);
 
 		PushApiFunction("ConVarSetValue", ConVarSetValue);
 		PushApiFunction("ConVarSetFlags", ConVarSetFlags);
@@ -1250,14 +1353,14 @@ GMOD_MODULE_OPEN() {
 
 		PushApiFunction("SetCommandNumber", SetCommandNumber);
 		PushApiFunction("SetCommandTick", SetCommandTick);
+		PushApiFunction("GetRandomSeed", GetRandomSeed);
+		PushApiFunction("SetRandomSeed", SetRandomSeed);
 		PushApiFunction("GetTyping", GetTyping);
 		PushApiFunction("SetTyping", SetTyping);
 		PushApiFunction("GetContextMenu", GetContextMenu);
 		PushApiFunction("SetContextMenu", SetContextMenu);
 		PushApiFunction("GetContextVector", GetContextVector);
 		PushApiFunction("SetContextVector", SetContextVector);
-		PushApiFunction("GetRandomSeed", GetRandomSeed);
-		PushApiFunction("SetRandomSeed", SetRandomSeed);
 		PushApiFunction("FindCommandNumber", FindCommandNumber);
 		PushApiFunction("MD5PseudoRandom", MD5PseudoRandom);
 		PushApiFunction("PredictSpread", PredictSpread);
@@ -1286,6 +1389,71 @@ GMOD_MODULE_OPEN() {
 		//PushApiFunction("Read", Read);
 		//PushApiFunction("Write", Write);
 
+		PushApiFunction("NetSetConVar", NetSetConVar);	
+		PushApiFunction("SendAchievement", SendAchievement);	
+		PushApiFunction("NetDisconnect", NetDisconnect);
+		PushApiFunction("GetLatency", GetLatency);
+		PushApiFunction("GetAvgLatency", GetAvgLatency);
+		PushApiFunction("GetAvgLoss", GetAvgLoss);
+		PushApiFunction("GetAvgChoke", GetAvgChoke);
+		PushApiFunction("GetAvgData", GetAvgData);
+		PushApiFunction("GetAvgPackets", GetAvgPackets);
+		PushApiFunction("GetTotalData", GetTotalData);
+		PushApiFunction("GetSequenceNr", GetSequenceNr);
+		PushApiFunction("IsValidPacket", IsValidPacket);
+		PushApiFunction("GetPacketTime", GetPacketTime);
+		PushApiFunction("GetPacketBytes", GetPacketBytes);
+		PushApiFunction("GetStreamProgress", GetStreamProgress);
+		PushApiFunction("GetCommandInterpolationAmount", GetCommandInterpolationAmount);
+		PushApiFunction("GetPacketResponseLatency", GetPacketResponseLatency);
+		PushApiFunction("GetRemoteFramerate", GetRemoteFramerate);
+		PushApiFunction("SetDataRate", SetDataRate);
+		PushApiFunction("SetTimeout", SetTimeout);
+		PushApiFunction("SetChallengeNr", SetChallengeNr);
+		PushApiFunction("NetShutdown", NetShutdown);
+		PushApiFunction("SendFile", SendFile);
+		PushApiFunction("Transmit", Transmit);
+		PushApiFunction("SetFileTransmissionMode", SetFileTransmissionMode);
+		PushApiFunction("SetCompressionMode", SetCompressionMode);
+		PushApiFunction("RequestFile", RequestFile);
+		PushApiFunction("SetMaxBufferSize", SetMaxBufferSize);
+		PushApiFunction("GetNumBitsWritten", GetNumBitsWritten);
+		PushApiFunction("SetNetInterpolationAmount", SetNetInterpolationAmount);
+		PushApiFunction("SetRemoteFramerate", SetRemoteFramerate);
+		PushApiFunction("SetMaxRoutablePayloadSize", SetMaxRoutablePayloadSize);
+		PushApiFunction("GetNetName", GetNetName);
+		PushApiFunction("GetNetAddress", GetNetAddress);
+		PushApiFunction("GetNetTime", GetNetTime);
+		PushApiFunction("GetTimeConnected", GetTimeConnected);
+		PushApiFunction("GetBufferSize", GetBufferSize);
+		PushApiFunction("GetDataRate", GetDataRate);
+		PushApiFunction("IsLoopback", IsLoopback);
+		PushApiFunction("IsTimingOut", IsTimingOut);
+		PushApiFunction("IsPlayback", IsPlayback);
+		PushApiFunction("GetTimeSinceLastReceived", GetTimeSinceLastReceived);
+		PushApiFunction("GetTimeoutSeconds", GetTimeoutSeconds);
+		PushApiFunction("GetChallengeNr", GetChallengeNr);
+		PushApiFunction("CanPacket", CanPacket);
+		PushApiFunction("IsOverflowed", IsOverflowed);
+		PushApiFunction("IsTimedOut", IsTimedOut);
+		PushApiFunction("HasPendingReliableData", HasPendingReliableData);
+		PushApiFunction("IsNull", IsNull);
+		PushApiFunction("GetMaxRoutablePayloadSize", GetMaxRoutablePayloadSize);
+		PushApiFunction("GetOutSequenceNr", GetOutSequenceNr);
+		PushApiFunction("SetOutSequenceNr", SetOutSequenceNr);
+		PushApiFunction("GetInSequenceNr", GetInSequenceNr);
+		PushApiFunction("SetInSequenceNr", SetInSequenceNr);
+		PushApiFunction("GetOutSequenceNrAck", GetOutSequenceNrAck);
+		PushApiFunction("SetOutSequenceNrAck", SetOutSequenceNrAck);
+		PushApiFunction("GetOutReliableState", GetOutReliableState);
+		PushApiFunction("SetOutReliableState", SetOutReliableState);
+		PushApiFunction("GetInReliableState", GetInReliableState);
+		PushApiFunction("SetInReliableState", SetInReliableState);
+		PushApiFunction("GetChokedPackets", GetChokedPackets);
+		PushApiFunction("SetChokedPackets", SetChokedPackets);
+		PushApiFunction("GetPacketDrop", GetPacketDrop);
+		PushApiFunction("SetPacketDrop", SetPacketDrop);
+
 		PushApiFunction("GetNetworkedVarInt", GetNetworkedVarInt);
 		PushApiFunction("GetNetworkedVarFloat", GetNetworkedVarFloat);
 		PushApiFunction("GetNetworkedVarBool", GetNetworkedVarBool);
@@ -1293,63 +1461,16 @@ GMOD_MODULE_OPEN() {
 		PushApiFunction("GetNetworkedVarVector", GetNetworkedVarVector);
 		PushApiFunction("GetNetworkedVarAngle", GetNetworkedVarAngle);
 		PushApiFunction("GetNetworkedVarEntity", GetNetworkedVarEntity);
-		PushApiFunction("GetTickBase", GetTickBase);
-		PushApiFunction("SetTickBase", SetTickBase);
-		PushApiFunction("UpdateAnimations", UpdateAnimations);
-		PushApiFunction("UpdateClientAnimation", UpdateClientAnimation);
-		PushApiFunction("SetCurrentLowerBodyYaw", SetCurrentLowerBodyYaw);
-		PushApiFunction("SetTargetLowerBodyYaw", SetTargetLowerBodyYaw);
-		PushApiFunction("GetCurrentLowerBodyYaw", GetCurrentLowerBodyYaw);
-		PushApiFunction("GetTargetLowerBodyYaw", GetTargetLowerBodyYaw);
 		PushApiFunction("GetSimulationTime", GetSimulationTime);
 		PushApiFunction("InvalidateBoneCache", InvalidateBoneCache);
-
-		PushApiFunction("GetNetName", GetNetName);
-		PushApiFunction("GetNetAddress", GetNetAddress);
-		PushApiFunction("GetNetTime", GetNetTime);
-		PushApiFunction("GetNetTimeConnected", GetNetTimeConnected);
-		PushApiFunction("GetNetBufferSize", GetNetBufferSize);
-		PushApiFunction("GetNetDataRate", GetNetDataRate);
-		PushApiFunction("GetIsLoopback", GetIsLoopback);
-		PushApiFunction("GetIsTimingOut", GetIsTimingOut);
-		PushApiFunction("SetOutSequenceNr", SetOutSequenceNr);
-		PushApiFunction("SetTimeout", SetTimeout);
-		PushApiFunction("NetShutdownStr", NetShutdownStr);
-		PushApiFunction("SetMaxRoutablePayloadSize", SetMaxRoutablePayloadSize);
-		PushApiFunction("GetOutSequenceNr", GetOutSequenceNr);
-		PushApiFunction("SetRemoteFramerate", SetRemoteFramerate);
-		PushApiFunction("SetInterpolationAmount", SetInterpolationAmount);
-		PushApiFunction("SetCompressionMode", SetCompressionMode);
-		PushApiFunction("SetInSequenceNr", SetInSequenceNr);
-		PushApiFunction("SetChallengeNr", SetChallengeNr);
-		PushApiFunction("SetDataRate", SetDataRate);
-		PushApiFunction("GetPacketBytes", GetPacketBytes);
-		PushApiFunction("GetInSequenceNr", GetInSequenceNr);
-		PushApiFunction("GetPacketTime", GetPacketTime);
-		PushApiFunction("IsValidPacket", IsValidPacket);
-		PushApiFunction("GetOutSequenceNrAck", GetOutSequenceNrAck);
-		PushApiFunction("SetOutSequenceNrAck", SetOutSequenceNrAck);
-		PushApiFunction("SetNetChokedPackets", SetNetChokedPackets);
-		PushApiFunction("GetNetChokedPackets", GetNetChokedPackets);
-		PushApiFunction("SetPacketDrop", SetPacketDrop);
-		PushApiFunction("SetOutReliableState", SetOutReliableState);
-		PushApiFunction("GetOutReliableState", GetOutReliableState);
-		PushApiFunction("GetPacketDrop", GetPacketDrop);
-		PushApiFunction("SetInReliableState", SetInReliableState);
-		PushApiFunction("GetInReliableState", GetInReliableState);
-		PushApiFunction("GetSequenceNrFlow", GetSequenceNrFlow);
-		PushApiFunction("GetTotalData", GetTotalData);
-		PushApiFunction("GetAvgPackets", GetAvgPackets);
-		PushApiFunction("GetAvgData", GetAvgData);
-		PushApiFunction("GetAvgChoke", GetAvgChoke);
-		PushApiFunction("GetAvgLoss", GetAvgLoss);
-		PushApiFunction("GetAvgLatency", GetAvgLatency);
-		PushApiFunction("GetLatency", GetLatency);
-		PushApiFunction("SendFile", SendFile);
-		PushApiFunction("RequestFile", RequestFile);
-		PushApiFunction("NetDisconnect", NetDisconnect);
-		PushApiFunction("NetSetConVar", NetSetConVar);	
-		PushApiFunction("NetSetConVarUnreliable", NetSetConVarUnreliable);
+		PushApiFunction("GetTargetLowerBodyYaw", GetTargetLowerBodyYaw);
+		PushApiFunction("GetCurrentLowerBodyYaw", GetCurrentLowerBodyYaw);
+		PushApiFunction("SetTargetLowerBodyYaw", SetTargetLowerBodyYaw);
+		PushApiFunction("SetCurrentLowerBodyYaw", SetCurrentLowerBodyYaw);
+		PushApiFunction("UpdateClientAnimation", UpdateClientAnimation);
+		PushApiFunction("UpdateAnimations", UpdateAnimations);
+		PushApiFunction("GetTickBase", GetTickBase);
+		PushApiFunction("SetTickBase", SetTickBase);
 
 		PushApiFunction("PushSpecial", PushSpecial);
 	LUA->SetField(-2, "ded");

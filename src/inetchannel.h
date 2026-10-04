@@ -8,6 +8,9 @@ typedef unsigned int RequestFile_t;
 typedef unsigned char byte;
 
 class INetMessageHandler;
+class INetChannelHandler;
+class IDemoRecorder;
+struct netadr_t;
 
 constexpr unsigned int NET_MESSAGE_BITS = 6;
 
@@ -113,20 +116,64 @@ class INetMessage;
 
 class INetChannel : public INetChannelInfo {
 public:
-	VPROXY(SetDataRate, 27, void, (float rate), rate);
-	VPROXY(SetTimeout, 31, void, (float seconds), seconds);
-	VPROXY(SetChallengeNr, 33, void, (unsigned int chnr), chnr);
-	VPROXY(Shutdown, 36, void, (char const* reason), reason);
-	VPROXY(SendNetMsg, 40, bool, (INetMessage* msg, bool bForceReliable = false, bool bVoice = false), msg, bForceReliable, bVoice);
-	VPROXY(SendFile, 42, bool, (const char* filename, unsigned int transferID), filename, transferID);
-	VPROXY(SetChoked, 45, void, (void));
-	VPROXY(SendDatagram, 46, int, (bf_write* data), data);
-	VPROXY(SetCompressionMode, 61, void, (bool bUseCompression), bUseCompression);
-	VPROXY(RequestFile, 62, unsigned int, (RequestFile_t type, CRC32_t crc), type, crc);
-	VPROXY(SetInterpolationAmount, 66, void, (float flInterpolationAmount), flInterpolationAmount);
-	VPROXY(SetRemoteFramerate, 67, void, (float flFrameTime, float flFrameTimeStdDeviation), flFrameTime, flFrameTimeStdDeviation);
-	VPROXY(SetMaxRoutablePayloadSize, 68, void, (int nSplitSize), nSplitSize);
-	  
+	virtual	~INetChannel( void ) {};
+
+	virtual void	SetDataRate(float rate) = 0;
+	virtual bool	RegisterMessage(INetMessage *msg) = 0;
+	virtual bool	StartStreaming( unsigned int challengeNr ) = 0;
+	virtual void	ResetStreaming( void ) = 0;
+	virtual void	SetTimeout(float seconds) = 0;
+	virtual void	SetDemoRecorder(IDemoRecorder *recorder) = 0;
+	virtual void	SetChallengeNr(unsigned int chnr) = 0;
+	
+	virtual void	Reset( void ) = 0;
+	virtual void	Clear( void ) = 0;
+	virtual void	Shutdown(const char *reason) = 0;
+	
+	virtual void	ProcessPlayback( void ) = 0;
+	virtual bool	ProcessStream( void ) = 0;
+	virtual void	ProcessPacket( struct netpacket_s* packet, bool bHasHeader ) = 0;
+			
+	virtual bool	SendNetMsg(INetMessage &msg, bool bForceReliable = false, bool bVoice = false ) = 0;
+	virtual bool	SendData(bf_write &msg, bool bReliable = true) = 0;
+	virtual bool	SendFile(const char *filename, unsigned int transferID) = 0;
+	virtual void	DenyFile(const char *filename, unsigned int transferID) = 0;
+	virtual void	RequestFile_OLD(const char *filename, unsigned int transferID) = 0;	// get rid of this function when we version the 
+	virtual void	SetChoked( void ) = 0;
+	virtual int		SendDatagram(bf_write *data) = 0;		
+	virtual bool	Transmit(bool onlyReliable = false) = 0;
+
+	virtual const netadr_t	&GetRemoteAddress( void ) const = 0;
+	virtual INetChannelHandler *GetMsgHandler( void ) const = 0;
+	virtual int				GetDropNumber( void ) const = 0;
+	virtual int				GetSocket( void ) const = 0;
+	virtual unsigned int	GetChallengeNr( void ) const = 0;
+	virtual void			GetSequenceData( int &nOutSequenceNr, int &nInSequenceNr, int &nOutSequenceNrAck ) = 0;
+	virtual void			SetSequenceData( int nOutSequenceNr, int nInSequenceNr, int nOutSequenceNrAck ) = 0;
+		
+	virtual void	UpdateMessageStats( int msggroup, int bits) = 0;
+	virtual bool	CanPacket( void ) const = 0;
+	virtual bool	IsOverflowed( void ) const = 0;
+	virtual bool	IsTimedOut( void ) const  = 0;
+	virtual bool	HasPendingReliableData( void ) = 0;
+
+	virtual void	SetFileTransmissionMode(bool bBackgroundMode) = 0;
+	virtual void	SetCompressionMode( bool bUseCompression ) = 0;
+	virtual unsigned int RequestFile(RequestFile_t type, CRC32_t crc) = 0;
+
+	virtual void	SetMaxBufferSize(bool bReliable, int nBytes, bool bVoice = false ) = 0;
+
+	virtual bool	IsNull() const = 0;
+	virtual int		GetNumBitsWritten( bool bReliable ) = 0;
+	virtual void	SetInterpolationAmount( float flInterpolationAmount ) = 0;
+	virtual void	SetRemoteFramerate( float flFrameTime, float flFrameTimeStdDeviation ) = 0;
+
+	// Max # of payload bytes before we must split/fragment the packet
+	virtual void	SetMaxRoutablePayloadSize( int nSplitSize ) = 0;
+	virtual int		GetMaxRoutablePayloadSize() = 0;
+
+	virtual int		GetProtocolVersion() = 0;
+
 public:
 	bool		m_bProcessingMessages;
 	bool		m_bClearedDuringProcessing;

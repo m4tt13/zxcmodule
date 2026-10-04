@@ -31,6 +31,8 @@ extern "C" void CreateMoveHookFuncNaked();
 class CStudioHdr;
 
 namespace detours {
+	bool bPostInit = false;
+
 	// Pre CreateMove
 	using PreCreateMoveFn = bool(__fastcall*)(ClientModeShared* self, float flInputSampleTime, CUserCmd* cmd);
 	PreCreateMoveFn preCreateMoveOriginal = nullptr;
@@ -78,7 +80,7 @@ namespace detours {
 	FrameStageFn FrameStageOriginal = nullptr;
 	
 	void __fastcall FrameStageNotifyHookFunc(CHLClient* self, int stage) {
-		if (!globals::localPlayer && stage == ClientFrameStage_t::FRAME_START)
+		if (!bPostInit && stage == ClientFrameStage_t::FRAME_START)
 			postInit();
 
 		{
@@ -331,7 +333,7 @@ namespace detours {
 		if (globals::shouldInterpolate)
 			return InterpolateOriginal(self, currentTime);
 
-		return (self == globals::localPlayer) ? InterpolateOriginal(self, currentTime) : true;
+		return (self->GetClientNetworkable()->entIndex() == interfaces::engineClient->GetLocalPlayer()) ? InterpolateOriginal(self, currentTime) : true;
 	}
 
 	// UpdateClientsideAnimation
@@ -509,8 +511,6 @@ namespace detours {
 		CBasePlayer* localPlayer = reinterpret_cast<CBasePlayer*>(interfaces::entityList->GetClientEntity(interfaces::engineClient->GetLocalPlayer()));
 
 		if (localPlayer) {
-			globals::localPlayer = localPlayer;
-
 			void* InterpolateT = vmt::get<void*>(localPlayer, 100);
 			void* UpdateClientAnimsT = vmt::get<void*>(localPlayer, 236);
 
@@ -519,6 +519,8 @@ namespace detours {
 
 			MH_EnableHook(InterpolateT);
 			MH_EnableHook(UpdateClientAnimsT);
+
+			bPostInit = true;
 		}
 	}
 

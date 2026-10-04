@@ -12,6 +12,4 @@ namespace globals {
 
 	bool		bCustomDisconnect			= false;	
 	std::string	customDisconnect			= "";
-
-	CBasePlayer* localPlayer				= nullptr;
 }

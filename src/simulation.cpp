@@ -113,7 +113,7 @@ void MovementSimulation::Start(CBasePlayer* player) {
 	_oldFirstTimePredicted = interfaces::prediction->IsFirstTimePredicted();
 	_oldFrameTime = interfaces::globalVars->frametime;
 
-	if (player != globals::localPlayer) {
+	if (player->GetClientNetworkable()->entIndex() == interfaces::engineClient->GetLocalPlayer()) {
 		// the hacks that make it work
 		player->m_bDucked() = player->IsDucking();
 		player->m_bDucking() = false;

@@ -16,7 +16,7 @@ Prediction::Prediction() : _moveData {0}, _oldCurTime(0.0), _oldFrameTime(0.0f) 
 }
 
 void Prediction::Start(CUserCmd* cmd) {
-	CBasePlayer* localPlayer = globals::localPlayer;
+	CBasePlayer* localPlayer = reinterpret_cast<CBasePlayer*>(interfaces::entityList->GetClientEntity(interfaces::engineClient->GetLocalPlayer()));
 	if (!localPlayer)
 		return;
 
@@ -50,7 +50,7 @@ void Prediction::Start(CUserCmd* cmd) {
 }
 
 void Prediction::Finish() {
-	CBasePlayer* localPlayer = globals::localPlayer;
+	CBasePlayer* localPlayer = reinterpret_cast<CBasePlayer*>(interfaces::entityList->GetClientEntity(interfaces::engineClient->GetLocalPlayer()));
 	if (!localPlayer)
 		return;
 

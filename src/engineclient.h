@@ -21,6 +21,7 @@ enum ClientFrameStage_t
 #include "util.h"
 
 #include "angle.h"
+#include "vmatrix.h"
 
 class IEngineClient {
 public:
@@ -34,6 +35,8 @@ public:
 	VPROXY(IsBoxVisible, 31, bool, (Vector const& mins, Vector const& maxs), mins, maxs);
 	VPROXY(IsBoxInViewCluster, 32, bool, (Vector const& mins, Vector const& maxs), mins, maxs);
 	VPROXY(GetGameDirectory, 35, char const*, (void));
+	VPROXY(WorldToScreenMatrix, 36, const VMatrix&, (void));
+	VPROXY(WorldToViewMatrix, 37, const VMatrix&, (void));
 	VPROXY(IsOccluded, 69, bool, (Vector const& vecAbsMins, Vector const& vecAbsMaxs), vecAbsMins, vecAbsMaxs);
 	VPROXY(GetNetChannelInfo, 72, INetChannelInfo*, (void));
 	VPROXY(IsPlayingTimeDemo, 78, bool, (void));
@@ -41,8 +44,8 @@ public:
 	VPROXY(ClientCmd_Unrestricted, 106, void, (char const* szCmdString), szCmdString);
 	VPROXY(SetRestrictServerCommands, 107, void, (bool bRestrict), bRestrict);
 	VPROXY(SetRestrictClientCommands, 108, void, (bool bRestrict), bRestrict);
-	VPROXY(GMOD_RawClientCmd_Unrestricted, 139, void, (char const* szCmdString), szCmdString);
-	VPROXY(GMOD_DestroyDataTable, 141, void, (IGMODDataTable* dataTable), dataTable);
+	VPROXY(GMOD_RawClientCmd_Unrestricted, 136, void, (char const* szCmdString), szCmdString);
+	VPROXY(GMOD_DestroyDataTable, 138, void, (IGMODDataTable* dataTable), dataTable);
 	 
 	INetChannel* GetNetChannel() { return reinterpret_cast<INetChannel*>(GetNetChannelInfo()); }
 }; 
