@@ -116,8 +116,8 @@ public:
 	bool IsInNoclip() { return GetMoveType() == MoveType::NOCLIP; }
 
 	// CPrediction__RunCommand 2 line
-	OFFSETVAR(CUserCmd*, GetCurrentCommand, 0x2C40); 
-	OFFSETVAR(CBasePlayerAnimState*, GetAnimState, 0x35C8);
+	OFFSETVAR(CUserCmd*, GetCurrentCommand, 0x2C48); 
+	OFFSETVAR(CBasePlayerAnimState*, GetAnimState, 0x35D0);
 
 	NETVAR(char, DT_GMOD_Player, m_nWaterLevel);
 
